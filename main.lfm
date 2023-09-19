@@ -1,0 +1,113 @@
+object App: TApp
+  Left = 2059
+  Height = 621
+  Top = -710
+  Width = 640
+  Caption = 'BinDb Conversion Kit'
+  ClientHeight = 621
+  ClientWidth = 640
+  OnCreate = FormCreate
+  Position = poDefaultPosOnly
+  LCLVersion = '2.2.4.0'
+  object PageControl1: TPageControl
+    Left = 0
+    Height = 621
+    Top = 0
+    Width = 640
+    ActivePage = MainTab
+    Align = alClient
+    TabIndex = 0
+    TabOrder = 0
+    object MainTab: TTabSheet
+      Caption = 'Main'
+      ClientHeight = 593
+      ClientWidth = 632
+      object OpenFile: TButton
+        Left = 8
+        Height = 25
+        Top = 32
+        Width = 104
+        Caption = 'Open File'
+        OnClick = OpenFileClick
+        TabOrder = 0
+      end
+      object CloseApp: TButton
+        Left = 512
+        Height = 33
+        Top = 552
+        Width = 107
+        Caption = 'Close'
+        OnClick = CloseAppClick
+        TabOrder = 1
+      end
+      object FileName: TEdit
+        Left = 8
+        Height = 15
+        Top = 8
+        Width = 616
+        BorderStyle = bsNone
+        TabOrder = 2
+      end
+      object ConvertFile: TButton
+        Left = 232
+        Height = 25
+        Top = 32
+        Width = 120
+        Caption = 'Convert to Bin-Db'
+        OnClick = ConvertFileClick
+        TabOrder = 3
+      end
+      object VersionList: TComboBox
+        Left = 504
+        Height = 23
+        Top = 34
+        Width = 100
+        ItemHeight = 15
+        ItemIndex = 1
+        Items.Strings = (
+          'TFF V2.0'
+          'TFF V3.0'
+          'TFF V4.0'
+        )
+        OnChange = VersionListChange
+        TabOrder = 4
+        Text = 'TFF V3.0'
+      end
+      object Label1: TLabel
+        Left = 432
+        Height = 15
+        Top = 37
+        Width = 62
+        Caption = 'TFF Version:'
+        Font.CharSet = ANSI_CHARSET
+        Font.Color = clNavy
+        Font.Pitch = fpVariable
+        Font.Quality = fqDraft
+        ParentColor = False
+        ParentFont = False
+      end
+      object Test: TButton
+        Left = 256
+        Height = 25
+        Top = 176
+        Width = 75
+        Caption = 'Test'
+        OnClick = TestClick
+        TabOrder = 5
+      end
+      object ConvertToCSV: TButton
+        Left = 232
+        Height = 25
+        Top = 80
+        Width = 120
+        Caption = 'Convert to CSV'
+        OnClick = ConvertToCSVClick
+        TabOrder = 6
+      end
+    end
+  end
+  object OpenDialog: TOpenDialog
+    Left = 16
+    Top = 576
+  end
+end
