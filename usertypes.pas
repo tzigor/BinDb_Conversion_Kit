@@ -8,6 +8,7 @@ uses
   Classes, SysUtils;
 
 Const
+  ExampleValue = 12345.123456789;
   NewLine = #13#10;
   Tab = #09;
   MIN_FILE_LENGTH = 100;
@@ -19,6 +20,11 @@ Const
   TFF_V30 = 3;
   TFF_V40 = 4;
   DATA_MAX_SIZE = 4294967295;
+
+  { Error codes }
+  FILE_NOT_FOUND = 1;
+  WRONG_FILE_FORMAT = 2;
+  UNEXPECTED_END_OF_FILE = 3;
 
   INCLINOMETER_BIN = 1;
   LTB_BIN = 2;
@@ -105,7 +111,6 @@ type
   end;
 
   TFrameRecords = array of TFrameRecord;
-
 
 implementation
 

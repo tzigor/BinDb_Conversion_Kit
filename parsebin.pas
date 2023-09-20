@@ -10,7 +10,6 @@ uses
 
   procedure TffDataChannelsSet(TFF_Ver: Byte);
   function BinParser(): TFrameRecords;
-  function LoadBinFile(): Boolean;
 
 implementation
 uses Main;
@@ -18,48 +17,20 @@ uses Main;
 var
   currentFileSize    : LongWord;
   EndOfFile          : Boolean;
-  Offset             : LongWord;
-
-function LoadBinFile(): Boolean; // Load bin file to the Bytes array
-begin
-  Result:= False;
-  App.OpenDialog.Filter:= '*.bin|*.bin';
-  App.OpenDialog.DefaultExt:= '.bin';
-  if App.OpenDialog.Execute then begin
-     Bytes:= LoadByteArray(App.OpenDialog.FileName);
-     if Bytes <> Null then begin
-        currentFileSize:= length(Bytes);
-        Offset:= 0;
-        if currentFileSize >= MIN_FILE_LENGTH then begin
-           EndOfFile:= False;
-           Result:= True;
-           CurrentOpenedFile:= App.OpenDialog.FileName;
-        end;
-     end;
-  end;
-end;
-
-function isEndOfFile(): Boolean;
-begin
-  if Offset = currentFileSize then begin
-     EndOfFile:= True;
-     Result:= True;
-  end
-  else Result:= False;
-end;
+  DataOffset         : LongWord;
 
 function GetCurrentByte(): Byte;
 var b: Byte;
 begin
-  b:= Bytes[Offset];
-  Inc(Offset);
+  b:= Bytes[DataOffset];
+  Inc(DataOffset);
   if isEndOfFile then Exit;
   if b = $DB then begin
-     b:= Bytes[Offset];
+     b:= Bytes[DataOffset];
      if b = $DC then Result:= $C0
      else if b = $DD then Result:= $DB
           else Result:= 0;
-     Inc(Offset);
+     Inc(DataOffset);
      if isEndOfFile then Exit;
   end
   else Result:= b;
@@ -79,7 +50,7 @@ function GetCurrentRecord(): TCurrentRecord; // Offset points to ADDR of current
 var CurrentRecord: TCurrentRecord;
     i: Byte;
 begin
-  if (Bytes[Offset] and $01) > 0 then begin
+  if (Bytes[DataOffset] and $01) > 0 then begin
      CurrentRecord.Addr:= GetCurrentByte;
      CurrentRecord.Cmd:= GetCurrentByte;
   end
@@ -147,7 +118,7 @@ var
 begin
   PrevDateTime:= 0;
   TffFrames.Init;
-  Offset:= 0;
+  DataOffset:= 0;
   EndOfFile:= False;
   repeat
     b:= 0;

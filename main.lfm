@@ -1,7 +1,7 @@
 object App: TApp
-  Left = 2059
+  Left = 1860
   Height = 621
-  Top = -710
+  Top = -774
   Width = 640
   Caption = 'BinDb Conversion Kit'
   ClientHeight = 621
@@ -22,15 +22,6 @@ object App: TApp
       Caption = 'Main'
       ClientHeight = 593
       ClientWidth = 632
-      object OpenFile: TButton
-        Left = 8
-        Height = 25
-        Top = 32
-        Width = 104
-        Caption = 'Open File'
-        OnClick = OpenFileClick
-        TabOrder = 0
-      end
       object CloseApp: TButton
         Left = 512
         Height = 33
@@ -38,7 +29,7 @@ object App: TApp
         Width = 107
         Caption = 'Close'
         OnClick = CloseAppClick
-        TabOrder = 1
+        TabOrder = 0
       end
       object FileName: TEdit
         Left = 8
@@ -46,16 +37,16 @@ object App: TApp
         Top = 8
         Width = 616
         BorderStyle = bsNone
-        TabOrder = 2
+        TabOrder = 1
       end
       object ConvertFile: TButton
-        Left = 232
+        Left = 288
         Height = 25
         Top = 32
         Width = 120
         Caption = 'Convert to Bin-Db'
         OnClick = ConvertFileClick
-        TabOrder = 3
+        TabOrder = 2
       end
       object VersionList: TComboBox
         Left = 504
@@ -70,7 +61,7 @@ object App: TApp
           'TFF V4.0'
         )
         OnChange = VersionListChange
-        TabOrder = 4
+        TabOrder = 3
         Text = 'TFF V3.0'
       end
       object Label1: TLabel
@@ -87,22 +78,200 @@ object App: TApp
         ParentFont = False
       end
       object Test: TButton
-        Left = 256
+        Left = 520
         Height = 25
-        Top = 176
+        Top = 368
         Width = 75
         Caption = 'Test'
         OnClick = TestClick
-        TabOrder = 5
+        TabOrder = 4
       end
-      object ConvertToCSV: TButton
-        Left = 232
-        Height = 25
-        Top = 80
-        Width = 120
-        Caption = 'Convert to CSV'
-        OnClick = ConvertToCSVClick
-        TabOrder = 6
+      object CSVBox: TGroupBox
+        Left = 20
+        Height = 168
+        Top = 152
+        Width = 564
+        Caption = 'CSV Converter'
+        ClientHeight = 148
+        ClientWidth = 560
+        TabOrder = 5
+        object ConvertToCSV: TButton
+          Left = 432
+          Height = 25
+          Top = 112
+          Width = 120
+          Caption = 'Convert to CSV'
+          OnClick = ConvertToCSVClick
+          TabOrder = 0
+        end
+        object Label2: TLabel
+          Left = 336
+          Height = 15
+          Top = 52
+          Width = 53
+          Caption = 'Separator:'
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clNavy
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          ParentColor = False
+          ParentFont = False
+        end
+        object SeparatorChar: TEdit
+          Left = 392
+          Height = 23
+          Top = 48
+          Width = 16
+          Alignment = taCenter
+          MaxLength = 1
+          OnChange = SeparatorCharChange
+          TabOrder = 1
+          Text = ';'
+        end
+        object Label4: TLabel
+          Left = 432
+          Height = 15
+          Top = 52
+          Width = 61
+          Caption = 'Float digits:'
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clNavy
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          ParentColor = False
+          ParentFont = False
+        end
+        object FloatDigits: TSpinEdit
+          Left = 504
+          Height = 23
+          Top = 48
+          Width = 50
+          MaxValue = 16
+          OnChange = FloatDigitsChange
+          TabOrder = 2
+          Value = 4
+        end
+        object NumberEx: TLabel
+          Left = 233
+          Height = 15
+          Top = 24
+          Width = 48
+          Caption = '123.1234'
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clMaroon
+          Font.Name = 'Segoe UI Semibold'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsBold]
+          ParentColor = False
+          ParentFont = False
+        end
+        object AddParameters: TCheckBox
+          Left = 8
+          Height = 19
+          Top = 48
+          Width = 121
+          Caption = 'Include parameters'
+          TabOrder = 3
+        end
+        object AddMeasure: TCheckBox
+          Left = 8
+          Height = 19
+          Top = 72
+          Width = 142
+          Caption = 'AddIncludeasurements'
+          TabOrder = 4
+        end
+        object AddUnits: TCheckBox
+          Left = 8
+          Height = 19
+          Top = 96
+          Width = 71
+          Caption = 'Add units'
+          OnChange = AddUnitsChange
+          TabOrder = 5
+        end
+        object AddType: TCheckBox
+          Left = 8
+          Height = 19
+          Top = 120
+          Width = 68
+          Caption = 'Add type'
+          OnChange = AddTypeChange
+          TabOrder = 6
+        end
+        object TimeHead: TLabel
+          Left = 16
+          Height = 15
+          Top = 0
+          Width = 28
+          Caption = 'TIME'
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clMaroon
+          Font.Name = 'Segoe UI Semibold'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsBold]
+          ParentColor = False
+          ParentFont = False
+        end
+        object TempHead: TLabel
+          Left = 232
+          Height = 15
+          Top = 0
+          Width = 62
+          Caption = 'CTRL_Temp'
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clMaroon
+          Font.Name = 'Segoe UI Semibold'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsBold]
+          ParentColor = False
+          ParentFont = False
+        end
+        object TimeEx: TLabel
+          Left = 16
+          Height = 15
+          Top = 24
+          Width = 39
+          Caption = 'TimeEx'
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clMaroon
+          Font.Name = 'Segoe UI Semibold'
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          Font.Style = [fsBold]
+          ParentColor = False
+          ParentFont = False
+        end
+        object HumanTime: TRadioButton
+          Left = 208
+          Height = 19
+          Top = 48
+          Width = 87
+          Caption = 'Human time'
+          OnChange = HumanTimeChange
+          TabOrder = 7
+        end
+        object UnixTime: TRadioButton
+          Left = 208
+          Height = 19
+          Top = 72
+          Width = 70
+          Caption = 'UnixTime'
+          OnChange = UnixTimeChange
+          TabOrder = 8
+        end
+        object S100: TRadioButton
+          Left = 208
+          Height = 19
+          Top = 96
+          Width = 44
+          Caption = '100S'
+          OnChange = S100Change
+          TabOrder = 9
+        end
       end
     end
   end

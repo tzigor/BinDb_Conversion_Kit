@@ -5,7 +5,7 @@ unit Utils;
 interface
 
 uses
-  Classes, SysUtils;
+  Classes, SysUtils, UserTypes;
 
 function LoadByteArray(const AFileName: string): TBytes;
 procedure SaveByteArray(AByteArray: TBytes; const AFileName: string);
@@ -20,8 +20,12 @@ function FillInt64(H3, H2, H1, H0, L3, L2, L1, L0, size: Byte): Int64;
 function FillQWord(H3, H2, H1, H0, L3, L2, L1, L0, size: Byte): QWord;
 function GetTypeLegth(wType: String): Byte;
 function FormatSeconds(i: Integer): String;
+function LoadSourceFile(FileExt: String; MinFileSize: LongWord): Boolean;
+function ReadCurrentByte(): Byte;
+function isEndOfFile(): Boolean;
 
 implementation
+Uses Main;
 
 function LoadByteArray(const AFileName: string): TBytes;
 var
@@ -56,6 +60,44 @@ begin
   finally
      AStream.Free;
   end;
+end;
+
+function LoadSourceFile(FileExt: String; MinFileSize: LongWord): Boolean; // Load bin file to the Bytes array
+begin
+  Result:= False;
+  App.OpenDialog.Filter:= 'bin files|*.' + FileExt + '|all files|*.*|';
+  App.OpenDialog.DefaultExt:= '.' + FileExt;
+  if App.OpenDialog.Execute then begin
+     Bytes:= LoadByteArray(App.OpenDialog.FileName);
+     if Bytes <> Null then begin
+        currentFileSize:= length(Bytes);
+        DataOffset:= 0;
+        if currentFileSize >= MinFileSize then begin
+           EndOfFile:= False;
+           Result:= True;
+           CurrentOpenedFile:= App.OpenDialog.FileName;
+        end;
+     end;
+  end;
+end;
+
+function ReadCurrentByte(): Byte;
+begin
+  if Not EndOfFile then begin
+     Result:= Bytes[DataOffset];
+     Inc(DataOffset);
+     if DataOffset >= currentFileSize then EndOfFile:= True;
+  end
+  else ErrorCode:= UNEXPECTED_END_OF_FILE;
+end;
+
+function isEndOfFile(): Boolean;
+begin
+  if DataOffset >= currentFileSize then begin
+     EndOfFile:= True;
+     Result:= True;
+  end
+  else Result:= False;
 end;
 
 function GetTypeLegth(wType: String): Byte;
