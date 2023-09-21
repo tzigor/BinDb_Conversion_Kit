@@ -16,8 +16,8 @@ type
   TApp = class(TForm)
     AddParameters: TCheckBox;
     AddMeasure: TCheckBox;
-    AddUnits: TCheckBox;
-    AddType: TCheckBox;
+    AddUnitsFlag: TCheckBox;
+    AddTypeFlag: TCheckBox;
     ConvertToCSV: TButton;
     CSVBox: TGroupBox;
     HumanTime: TRadioButton;
@@ -40,8 +40,10 @@ type
     OpenDialog: TOpenDialog;
     PageControl1: TPageControl;
     MainTab: TTabSheet;
-    procedure AddTypeChange(Sender: TObject);
-    procedure AddUnitsChange(Sender: TObject);
+    procedure AddMeasureChange(Sender: TObject);
+    procedure AddParametersChange(Sender: TObject);
+    procedure AddTypeFlagChange(Sender: TObject);
+    procedure AddUnitsFlagChange(Sender: TObject);
     procedure CloseAppClick(Sender: TObject);
     procedure ConvertFileClick(Sender: TObject);
     procedure ConvertToCSVClick(Sender: TObject);
@@ -89,32 +91,44 @@ begin
   App.Close;
 end;
 
-procedure TApp.AddUnitsChange(Sender: TObject);
+procedure TApp.AddUnitsFlagChange(Sender: TObject);
 begin
+  CSVConverter.SetAddUnits(AddUnitsFlag.Checked);
   TimeHead.Caption:= 'TIME';
   TempHead.Caption:= 'CTRL_Temp';
-  if AddUnits.Checked then begin
+  if AddUnitsFlag.Checked then begin
      TimeHead.Caption:= TimeHead.Caption + '(100S)';
      TempHead.Caption:= TempHead.Caption + '(C)';
   end;
-  if AddType.Checked then begin
+  if AddTypeFlag.Checked then begin
      TimeHead.Caption:= TimeHead.Caption + '(F4)';
      TempHead.Caption:= TempHead.Caption + '(I1)';
   end;
 end;
 
-procedure TApp.AddTypeChange(Sender: TObject);
+procedure TApp.AddTypeFlagChange(Sender: TObject);
 begin
+  CSVConverter.SetAddType(AddTypeFlag.Checked);
   TimeHead.Caption:= 'TIME';
   TempHead.Caption:= 'CTRL_Temp';
-  if AddUnits.Checked then begin
+  if AddUnitsFlag.Checked then begin
      TimeHead.Caption:= TimeHead.Caption + '(100S)';
      TempHead.Caption:= TempHead.Caption + '(C)';
   end;
-  if AddType.Checked then begin
+  if AddTypeFlag.Checked then begin
      TimeHead.Caption:= TimeHead.Caption + '(F4)';
      TempHead.Caption:= TempHead.Caption + '(I1)';
   end;
+end;
+
+procedure TApp.AddParametersChange(Sender: TObject);
+begin
+   CSVConverter.SetIncludeParams(AddParameters.Checked);
+end;
+
+procedure TApp.AddMeasureChange(Sender: TObject);
+begin
+  CSVConverter.SetIncludeMeasures(AddMeasure.Checked);
 end;
 
 procedure TApp.ConvertFileClick(Sender: TObject);
@@ -143,9 +157,20 @@ begin
 end;
 
 procedure TApp.ConvertToCSVClick(Sender: TObject);
+var Date_Time_Type: Byte;
 begin
   if LoadSourceFile('bin_db', 100) then begin
-     CSVConverter.Init(SeparatorChar.Text[1]);
+     if HumanTime.Checked then Date_Time_Type:= 1;
+     if UnixTime.Checked then Date_Time_Type:= 2;
+     if S100.Checked then Date_Time_Type:= 3;
+
+     CSVConverter.Init(SeparatorChar.Text[1],
+                       AddParameters.Checked,
+                       AddMeasure.Checked,
+                       AddUnitsFlag.Checked,
+                       AddTypeFlag.Checked,
+                       Date_Time_Type);
+
      CSVConverter.CSVComposer;
      try
        CSVConverter.GetCSVData.SaveToFile('test.csv');
@@ -172,23 +197,38 @@ begin
   if SeparatorChar.Text = '' then SeparatorChar.Text:= ';';
 end;
 
+var s: String;
+
+procedure ChangeS(s: String);
+begin
+  s:= 'ABC';
+end;
+
 procedure TApp.TestClick(Sender: TObject);
 begin
-  ShowMessage(IntToStr(GetTypeLegth('U4')));
+  s:= '123';
+  ShowMessage(s);
+  ChangeS(s);
+  ShowMessage(s);
 end;
 
 procedure TApp.UnixTimeChange(Sender: TObject);
 begin
+  if UnixTime.Checked then
+    CSVConverter.SetDateTimeType(2);
   TimeEx.Caption:= '1666337309';
 end;
 
 procedure TApp.HumanTimeChange(Sender: TObject);
 begin
-  TimeEx.Caption:= '31-12-2023 23:55:35';
+  if HumanTime.Checked then
+    CSVConverter.SetDateTimeType(1);
+  TimeEx.Caption:= '12/31/2023 23:55:35';
 end;
 
 procedure TApp.S100Change(Sender: TObject);
 begin
+  if S100.Checked then CSVConverter.SetDateTimeType(3);
   TimeEx.Caption:= '178.125';
 end;
 

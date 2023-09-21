@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ComCtrls, DateUtils,
-  UserTypes, Utils;
+  UserTypes, Utils, StrUtils;
 
 type
   TMeasurement = record
@@ -33,15 +33,25 @@ type
 
   TCSVConverter = object
   private
-     CSVSeparator  : Char;
-     Data          : TBytes;
-     ParamChannels : TStringList;
-     Measurements  : TStringList;
-     CSVData       : TStringList;
-     StartDate     : TDateTime;
+     CSVSeparator       : Char;
+     Data            : TBytes;
+     ParamChannels   : TStringList;
+     Measurements    : TStringList;
+     CSVData         : TStringList;
+     StartDate       : TDateTime;
+     IncludeParams   : Boolean;
+     IncludeMeasures : Boolean;
+     AddUnits        : Boolean;
+     AddType         : Boolean;
+     DateTimeType    : Byte; { 1 - Human Date/Time, 2 - Unix Time, 3 - 100s }
   public
-     constructor Init(Separator: Char);
+     constructor Init(Separator: Char; IncludeP, IncludeM, AddU, AddT: Boolean; DateType: Byte);
      destructor Done;
+     procedure SetIncludeParams(Value: Boolean);
+     procedure SetIncludeMeasures(Value: Boolean);
+     procedure SetAddUnits(Value: Boolean);
+     procedure SetAddType(Value: Boolean);
+     procedure SetDateTimeType(Value: Byte);
      function GetCSVData(): TStringList;
      function GetRecordLength(): LongWord;
      procedure GetData(Size: LongWord);
@@ -58,7 +68,7 @@ implementation
 
 uses Main;
 
-  constructor TCSVConverter.Init(Separator: Char);
+  constructor TCSVConverter.Init(Separator: Char; IncludeP, IncludeM, AddU, AddT: Boolean; DateType: Byte);
   begin
      CSVSeparator:= Separator;
 
@@ -70,20 +80,52 @@ uses Main;
 
      if CSVData is TStringList then FreeAndNil(CSVData);
      CSVData:= TStringList.Create;
+
+     StartDate:= 0;
+     IncludeParams:= IncludeP;
+     IncludeMeasures:= IncludeM;
+     AddUnits:= AddU;
+     AddType:= AddT;
+     DateTimeType:= DateType;
   end;
 
   destructor TCSVConverter.Done;
   begin
   end;
 
+  procedure TCSVConverter.SetIncludeParams(Value: Boolean);
+  begin
+     IncludeParams:= Value;
+  end;
+
+  procedure TCSVConverter.SetIncludeMeasures(Value: Boolean);
+  begin
+     IncludeMeasures:= Value;
+  end;
+
+  procedure TCSVConverter.SetAddUnits(Value: Boolean);
+  begin
+     AddUnits:= Value;
+  end;
+
+  procedure TCSVConverter.SetAddType(Value: Boolean);
+  begin
+     AddType:= Value;
+  end;
+
+  procedure TCSVConverter.SetDateTimeType(Value: Byte);
+  begin
+     DateTimeType:= Value;
+  end;
+
   function TCSVConverter.GetCSVData(): TStringList;
   var i: Word;
   begin
-     if App.AddMeasure.Checked And (Measurements.Count > 0) then begin
+     if IncludeMeasures And (Measurements.Count > 0) then begin
         for i:=Measurements.Count - 1 downto 0 do CSVData.Insert(0, Measurements[i]);
      end;
 
-     if App.AddParameters.Checked And (ParamChannels.Count > 0) then begin
+     if IncludeParams And (ParamChannels.Count > 0) then begin
         for i:=ParamChannels.Count - 1 downto 0 do CSVData.Insert(0, ParamChannels[i]);
      end;
 
@@ -101,9 +143,17 @@ uses Main;
     Result:= wStr;
   end;
 
-  procedure FindStartDate(Parameter: String);
+  procedure TCSVConverter.FindStartDate(Parameter: String);
   begin
-     if
+     if (NPos('START', UpperCase(Parameter), 1) > 0) And
+              (NPos('DATE', UpperCase(Parameter), 1) > 0) then begin
+        Copy2SymbDel(Parameter, '=');
+        try
+          StartDate:= ScanDateTime('dd-mmm-yyyy', DelSpace(Parameter));
+        except
+          on Exception : EConvertError do
+        end;
+     end;
   end;
 
   function TCSVConverter.GetRecordLength(): LongWord;
@@ -216,7 +266,12 @@ uses Main;
         case ChannelsList[i].RepCode of
           'F4': begin
                   Move(Data[DataCount], F4, 4);
-                  FrameStr:= FloatToStrF(F4, ffFixed, 10, App.FloatDigits.Value);
+                  if i = 0 then begin
+                     if DateTimeType = 1 then FrameStr:= DateTimeToStr(IncMilliSecond(StartDate, Round(F4 * 100000 )))
+                     else if DateTimeType = 2 then FrameStr:= IntToStr(DateTimeToUnix(IncMilliSecond(StartDate, Round(F4 * 100000 ))))
+                          else FrameStr:= FloatToStrF(F4, ffFixed, 10, App.FloatDigits.Value);
+                  end
+                  else FrameStr:= FloatToStrF(F4, ffFixed, 10, App.FloatDigits.Value);
                   Inc(DataCount, 4);
                 end;
           'F8': begin
@@ -292,8 +347,8 @@ uses Main;
           'D': begin
                   Insert(ParseDataChannel(RecordLength), DataChannels, DATA_MAX_SIZE);
                   Channels:= Channels + DataChannels[ChannelsCount].DLISName;
-                  if App.AddUnits.Checked then Channels:= Channels + '(' + DataChannels[ChannelsCount].Units + ')';
-                  if App.AddType.Checked then Channels:= Channels + '(' + DataChannels[ChannelsCount].RepCode + ')';
+                  if AddUnits then Channels:= Channels + '(' + DataChannels[ChannelsCount].Units + ')';
+                  if AddType then Channels:= Channels + '(' + DataChannels[ChannelsCount].RepCode + ')';
                   Channels:= Channels + CSVSeparator;
                   Inc(ChannelsCount);
                end;

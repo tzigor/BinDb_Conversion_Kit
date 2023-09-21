@@ -14,26 +14,24 @@ uses
 implementation
 uses Main;
 
-var
-  currentFileSize    : LongWord;
-  EndOfFile          : Boolean;
-  DataOffset         : LongWord;
-
 function GetCurrentByte(): Byte;
 var b: Byte;
 begin
-  b:= Bytes[DataOffset];
-  Inc(DataOffset);
-  if isEndOfFile then Exit;
-  if b = $DB then begin
-     b:= Bytes[DataOffset];
-     if b = $DC then Result:= $C0
-     else if b = $DD then Result:= $DB
-          else Result:= 0;
-     Inc(DataOffset);
-     if isEndOfFile then Exit;
+  if Not EndOfFile then begin
+      b:= Bytes[DataOffset];
+      Inc(DataOffset);
+      if isEndOfFile then Exit;
+      if b = $DB then begin
+         b:= Bytes[DataOffset];
+         if b = $DC then Result:= $C0
+         else if b = $DD then Result:= $DB
+              else Result:= 0;
+         Inc(DataOffset);
+         if isEndOfFile then Exit;
+      end
+      else Result:= b;
   end
-  else Result:= b;
+  else ErrorCode:= UNEXPECTED_END_OF_FILE;
 end;
 
 procedure DoCrc(data:byte; var crc:byte);
@@ -71,16 +69,39 @@ procedure TffDataChannelsSet(Tff_Ver: Byte);
 begin
   TffStructure.Init;
   TffStructure.AddChannel('TIME', '100S', 'F4', '1', Tff_Ver);
-  // Cmd - 42
-  TffStructure.AddChannel('d_GX', 'g', 'F4', '1', Tff_Ver);
-  TffStructure.AddChannel('d_GY', 'g', 'F4', '1', Tff_Ver);
-  TffStructure.AddChannel('d_GZ', 'g', 'F4', '1', Tff_Ver);
-  TffStructure.AddChannel('d_HX', 'h', 'F4', '1', Tff_Ver);
-  TffStructure.AddChannel('d_HY', 'h', 'F4', '1', Tff_Ver);
-  TffStructure.AddChannel('d_HZ', 'h', 'F4', '1', Tff_Ver);
-  TffStructure.AddChannel('CRPM', 'rpm', 'U1', '1', Tff_Ver);
-  TffStructure.AddChannel('Incl_Temp', 'C', 'I1', '1', Tff_Ver);
-  // Cmd - 41
+
+  { Cmd - 41 }
+  TffStructure.AddChannel('UCmiVmi', 'V', 'U1', '1', Tff_Ver);
+  TffStructure.AddChannel('UCmaVmi', 'V', 'U1', '1', Tff_Ver);
+  TffStructure.AddChannel('UCmiVma', 'V', 'U1', '1', Tff_Ver);
+  TffStructure.AddChannel('UCmaVma', 'V', 'U1', '1', Tff_Ver);
+
+  TffStructure.AddChannel('UImiVmi', 'V', 'U1', '1', Tff_Ver);
+  TffStructure.AddChannel('UImaVmi', 'V', 'U1', '1', Tff_Ver);
+  TffStructure.AddChannel('UImiVma', 'V', 'U1', '1', Tff_Ver);
+  TffStructure.AddChannel('UImaVma', 'V', 'U1', '1', Tff_Ver);
+
+  TffStructure.AddChannel('Tmin1', 'ms', 'U1', '1', Tff_Ver);
+  TffStructure.AddChannel('Tmax1', 'ms', 'U1', '1', Tff_Ver);
+  TffStructure.AddChannel('Tmin2st', 'ms', 'U1', '1', Tff_Ver);
+  TffStructure.AddChannel('Tmax2st', 'ms', 'U1', '1', Tff_Ver);
+
+  TffStructure.AddChannel('Amin1', 'mA', 'U1', '1', Tff_Ver);
+  TffStructure.AddChannel('Amax1', 'mA', 'U1', '1', Tff_Ver);
+  TffStructure.AddChannel('Amin2st', 'mA', 'U1', '1', Tff_Ver);
+  TffStructure.AddChannel('Amax2st', 'mA', 'U1', '1', Tff_Ver);
+
+  TffStructure.AddChannel('Tmin2', 'ms', 'U1', '1', Tff_Ver);
+  TffStructure.AddChannel('Tmax2', 'ms', 'U1', '1', Tff_Ver);
+
+  TffStructure.AddChannel('TminRet', 'ms', 'U1', '1', Tff_Ver);
+  TffStructure.AddChannel('TmaxRet', 'ms', 'U1', '1', Tff_Ver);
+
+  TffStructure.AddChannel('Amin2', 'mA', 'U1', '1', Tff_Ver);
+  TffStructure.AddChannel('Amax2', 'mA', 'U1', '1', Tff_Ver);
+
+  TffStructure.AddChannel('Nerror', 'cnt', 'U1', '1', Tff_Ver);
+
   TffStructure.AddChannel('TRPM', 'rpm', 'U2', '1', Tff_Ver);
   TffStructure.AddChannel('MUP_Temp', 'C', 'I1', '1', Tff_Ver);
   TffStructure.AddChannel('Shock_X', 'g', 'U1', '1', Tff_Ver);
@@ -88,11 +109,33 @@ begin
   TffStructure.AddChannel('Shock_Z', 'g', 'U1', '1', Tff_Ver);
   TffStructure.AddChannel('Vib_X', 'g', 'F4', '1', Tff_Ver);
   TffStructure.AddChannel('Vib_Lat', 'g', 'F4', '1', Tff_Ver);
-  //TffStructure.AddChannel('Time_50G', 's', 'I4', '1', Tff_Ver);
+  TffStructure.AddChannel('Th50G', 'mcs', 'I4', '1', Tff_Ver);
+
+  { Cmd - 42 }
+  TffStructure.AddChannel('CRPM', 'rpm', 'U1', '1', Tff_Ver);
+  TffStructure.AddChannel('Incl_Temp', 'C', 'I1', '1', Tff_Ver);
+  TffStructure.AddChannel('d_GX', 'g', 'F4', '1', Tff_Ver);
+  TffStructure.AddChannel('d_GY', 'g', 'F4', '1', Tff_Ver);
+  TffStructure.AddChannel('d_GZ', 'g', 'F4', '1', Tff_Ver);
+  TffStructure.AddChannel('d_HX', 'h', 'F4', '1', Tff_Ver);
+  TffStructure.AddChannel('d_HY', 'h', 'F4', '1', Tff_Ver);
+  TffStructure.AddChannel('d_HZ', 'h', 'F4', '1', Tff_Ver);
+
+  { Cmd - 2 }
+  TffStructure.AddChannel('s_GX', 'g', 'F4', '1', Tff_Ver);
+  TffStructure.AddChannel('s_GY', 'g', 'F4', '1', Tff_Ver);
+  TffStructure.AddChannel('s_GZ', 'g', 'F4', '1', Tff_Ver);
+  TffStructure.AddChannel('s_HX', 'h', 'F4', '1', Tff_Ver);
+  TffStructure.AddChannel('s_HY', 'h', 'F4', '1', Tff_Ver);
+  TffStructure.AddChannel('s_HZ', 'h', 'F4', '1', Tff_Ver);
+
 end;
 
 function BinParser(): TFrameRecords;
 var
+
+  //FS            : TextFile;
+
   s             : String;
   i             : Integer;
   d             : Double;
@@ -115,11 +158,19 @@ var
   F4            : Single;
   F8            : Double;
 
+  CycleNum      : LongWord;
+
 begin
+  ErrorCode:= 0;
+
+  //AssignFile(FS, 'DebugFile.txt');
+  //Rewrite(FS);
+
   PrevDateTime:= 0;
   TffFrames.Init;
   DataOffset:= 0;
   EndOfFile:= False;
+  CycleNum:= 0;
   repeat
     b:= 0;
     while (b <> $C0) And (Not EndOfFile) do b:= GetCurrentByte;
@@ -134,6 +185,7 @@ begin
                         StrToInt(IntToHex(CurrentRecord.Data[3])), StrToInt(IntToHex(CurrentRecord.Data[4])), StrToInt(IntToHex(CurrentRecord.Data[5])), 0);
             if (PrevDateTime <> DateTime) And ((CurrentRecord.Cmd = 41) or (CurrentRecord.Cmd = 42)) then TffFrames.AddRecord(DateTime, TffStructure.GetDataChannelSize, TffStructure.GetTFFDataChannels);
             PrevDateTime:= DateTime;
+
             case CurrentRecord.Cmd of
               01: {$REGION ' запись при выключении питания '}
                   begin
@@ -194,31 +246,34 @@ begin
                      Buf[06]..Buf[21]: данные. }
 
                     {Buf[06]..Buf[07]: показания акселерометра AX. }
-                    Move(CurrentRecord.Data[6], I2, 2);
-                    s:= #09#09#09#09 + FormatFloat('#0.0000', I2 * 1.2 / $7FFF) + #09 + 'показания акселерометра AX';
+                    Move(CurrentRecord.Data[06], I2, 2);
+                    F4:= I2 * 1.2 / $7FFF;
+                    TffFrames.AddData(TffStructure.GetOffsetByName('s_GX'), F4);
 
                     {Buf[08]..Buf[09]: показания акселерометра AY. }
-                    Move(CurrentRecord.Data[8], I2, 2);
-                    s:= #09#09#09#09 + FormatFloat('#0.0000', I2 * 1.2 / $7FFF) + #09 + 'показания акселерометра AY';
+                    Move(CurrentRecord.Data[08], I2, 2);
+                    F4:= I2 * 1.2 / $7FFF;
+                    TffFrames.AddData(TffStructure.GetOffsetByName('s_GY'), F4);
 
                     {Buf[10]..Buf[11]: показания акселерометра AZ. }
                     Move(CurrentRecord.Data[10], I2, 2);
-                    s:= #09#09#09#09 + FormatFloat('#0.0000', I2 * 1.2 / $7FFF) + #09 + 'показания акселерометра AZ';
+                    F4:= I2 * 1.2 / $7FFF;
+                    TffFrames.AddData(TffStructure.GetOffsetByName('s_GZ'), F4);
 
                     {Buf[12]..Buf[13]: показания магнитометра BX. }
                     Move(CurrentRecord.Data[12], I2, 2);
-                    i64:= I2;
-                    s:= #09#09#09#09 + FormatFloat('#0.00', i64 * 120000 / $7FFF) + #09 + 'показания магнитометра BX';
+                    F4:= I2 * 120000 / $7FFF;
+                    TffFrames.AddData(TffStructure.GetOffsetByName('s_HX'), F4);
 
                     {Buf[14]..Buf[15]: показания магнитометра BY. }
                     Move(CurrentRecord.Data[14], I2, 2);
-                    i64:= I2;
-                    s:= #09#09#09#09 + FormatFloat('#0.00', i64 * 120000 / $7FFF) + #09 + 'показания магнитометра BY';
+                    F4:= I2 * 120000 / $7FFF;
+                    TffFrames.AddData(TffStructure.GetOffsetByName('s_HY'), F4);
 
                     {Buf[16]..Buf[17]: показания магнитометра BZ. }
                     Move(CurrentRecord.Data[16], I2, 2);
-                    i64:= I2;
-                    s:= #09#09#09#09 + FormatFloat('#0.00', i64 * 120000 / $7FFF) + #09 + 'показания магнитометра BZ';
+                    F4:= I2 * 120000 / $7FFF;
+                    TffFrames.AddData(TffStructure.GetOffsetByName('s_HZ'), F4);
 
                     {Buf[18]..Buf[19]: приращение отклонителя. }
                     Move(CurrentRecord.Data[18], I2, 2);
@@ -236,39 +291,42 @@ begin
                      Buf[06]..Buf[19]: данные. }
 
                     {Buf[06]..Buf[07]: показания акселерометра AX. }
-                    Move(CurrentRecord.Data[6], I2, 2);
-                    s:= #09#09#09#09 + FormatFloat('#0.0000', I2 * 1.2 / $7FFF) + #09 + 'показания акселерометра AX';
+                    Move(CurrentRecord.Data[06], I2, 2);
+                    F4:= I2 * 1.2 / $7FFF;
+                    TffFrames.AddData(TffStructure.GetOffsetByName('d_GX'), F4);
 
                     {Buf[08]..Buf[09]: показания акселерометра AY. }
-                    Move(CurrentRecord.Data[8], I2, 2);
-                    s:= #09#09#09#09 + FormatFloat('#0.0000', I2 * 1.2 / $7FFF) + #09 + 'показания акселерометра AY';
+                    Move(CurrentRecord.Data[08], I2, 2);
+                    F4:= I2 * 1.2 / $7FFF;
+                    TffFrames.AddData(TffStructure.GetOffsetByName('d_GY'), F4);
 
                     {Buf[10]..Buf[11]: показания акселерометра AZ. }
                     Move(CurrentRecord.Data[10], I2, 2);
-                    s:= #09#09#09#09 + FormatFloat('#0.0000', I2 * 1.2 / $7FFF) + #09 + 'показания акселерометра AZ';
+                    F4:= I2 * 1.2 / $7FFF;
+                    TffFrames.AddData(TffStructure.GetOffsetByName('d_GZ'), F4);
 
                     {Buf[12]..Buf[13]: показания магнитометра BX. }
                     Move(CurrentRecord.Data[12], I2, 2);
-                    i64:= I2;
-                    s:= #09#09#09#09 + FormatFloat('#0.00', i64 * 120000 / $7FFF) + #09 + 'показания магнитометра BX';
+                    F4:= I2 * 120000 / $7FFF;
+                    TffFrames.AddData(TffStructure.GetOffsetByName('d_HX'), F4);
 
                     {Buf[14]..Buf[15]: показания магнитометра BY. }
                     Move(CurrentRecord.Data[14], I2, 2);
-                    i64:= I2;
-                    s:= #09#09#09#09 + FormatFloat('#0.00', i64 * 120000 / $7FFF) + #09 + 'показания магнитометра BY';
+                    F4:= I2 * 120000 / $7FFF;
+                    TffFrames.AddData(TffStructure.GetOffsetByName('d_HY'), F4);
 
                     {Buf[16]..Buf[17]: показания магнитометра BZ. }
                     Move(CurrentRecord.Data[16], I2, 2);
-                    i64:= I2;
-                    s:= #09#09#09#09 + FormatFloat('#0.00', i64 * 120000 / $7FFF) + #09 + 'показания магнитометра BZ';
+                    F4:= I2 * 120000 / $7FFF;
+                    TffFrames.AddData(TffStructure.GetOffsetByName('d_HZ'), F4);
 
-                    {Buf[18]: скорость вращения буровой колонны, об/мин. }
-                    s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[18]) + #09#09 + 'скорость вращения буровой колонны, об/мин';
+                    {Buf[18]: скорость буровой колонны об/мин. }
+                    U1:= CurrentRecord.Data[18];
+                    TffFrames.AddData(TffStructure.GetOffsetByName('CRPM'), U1);
 
                     {Buf[19]: температура модуля инклинометра. }
-                     //s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[19]) + #09#09 + 'температура модуля инклинометра';
-                     Move(CurrentRecord.Data[19], I1, 1);
-                     s:= #09#09#09#09 + IntToStr(I1) + #09#09 + 'температура модуля инклинометра';
+                    I1:= CurrentRecord.Data[19];
+                    TffFrames.AddData(TffStructure.GetOffsetByName('Incl_Temp'), I1);
                   end;
                   {$ENDREGION}
 
@@ -1063,288 +1121,6 @@ begin
                      Buf[07]..Buf[35]: данные.                 }
 
                     case CurrentRecord.Data[6] of
-                      00: {$REGION ' версия №00 '}
-                          begin
-                            {Buf[07]..Buf[08]: ток инвертора. }
-                            Move(CurrentRecord.Data[07], w, 2);
-                            s:= #09#09#09#09 + Format('%.1f', [w / 10]) + #09+ 'ток инвертора';
-
-                            {Buf[09]..Buf[10]: максимум входного напряжения. }
-                            Move(CurrentRecord.Data[09], w, 2);
-                            s:= #09#09#09#09 + Format('%.1f', [w / 10]) + #09+ 'максимум входного напряжения';
-
-                            {Buf[11]..Buf[12]: минимум входного напряжения. }
-                            Move(CurrentRecord.Data[11], w, 2);
-                            s:= #09#09#09#09 + Format('%.1f', [w / 10]) + #09+ 'минимум входного напряжения';
-
-                            {Buf[13]..Buf[14]: обороты генератора. }
-                            Move(CurrentRecord.Data[13], w, 2);
-                            s:= #09#09#09#09 + IntToStr(w) + #09+ 'обороты генератора';
-
-                            {Buf[15]..Buf[16]: сопротивление нагрузки. }
-                            Move(CurrentRecord.Data[15], w, 2);
-                            s:= #09#09#09#09 + Format('%.3f', [w / 1000]) + #09+ 'сопротивление нагрузки';
-
-
-                            {Buf[17]: средняя величина удара превышающего 50G (в G) по оси Х. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[17]) + #09+ 'средняя величина  удара превышающего  50G (в G) по оси Х';
-
-                            {Buf[18]..Buf[21]: время длит. сред. удара превышающего 50G (*25мкс) по оси Х. }
-                            Move(CurrentRecord.Data[18], i, 4);
-                            s:= #09#09#09#09 + IntToStr(i) + #09+ 'время длит. сред. удара превышающего 50G (*25мкс) по оси Х';
-
-                            {Buf[22]: средняя величина удара превышающего 50G (в G) по оси Y. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[22]) + #09+ 'средняя величина удара превышающего 50G (в G) по оси Y';
-
-                            {Buf[23]..Buf[26]: время длит. сред. удара превышающего 50G (*25мкс) по оси Y. }
-                            Move(CurrentRecord.Data[23], i, 4);
-                            s:= #09#09#09#09 + IntToStr(i) + #09+ 'время длит. сред. удара превышающего 50G (*25мкс) по оси Y';
-
-                            {Buf[27]: средняя величина удара превышающего 50G (в G) по оси Z. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[27]) + #09+ 'средняя величина удара превышающего 50G (в G) по оси Z';
-
-                            {Buf[28]..Buf[31]: время длит. сред. удара превышающего 50G (*25мкс) по оси Z. }
-                            Move(CurrentRecord.Data[28], i, 4);
-                            s:= #09#09#09#09 + IntToStr(i) + #09+ 'время длит. сред. удара превышающего 50G (*25мкс) по оси Z';
-
-                            {Buf[32]: максимум по оси Х. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[32]) + #09+ 'максимум по оси Х';
-
-                            {Buf[33]: максимум по оси Y. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[33]) + #09+ 'максимум по оси Y';
-
-                            {Buf[34]: максимум по оси Z. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[34]) + #09+ 'максимум по оси Z';
-
-                            {Buf[35]: степень залипания колонны. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[35]) + #09+ 'степень залипания колонны';
-
-                            {Buf[36]: температура силового модуля. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[36]) + #09+ 'температура силового модуля';
-                          end;
-                          {$ENDREGION}
-
-                      01: {$REGION ' версия №01 '}
-                          begin
-                            {Buf[07]..Buf[08]: ток инвертора. }
-                            Move(CurrentRecord.Data[07], w, 2);
-                            s:= #09#09#09#09 + Format('%.1f', [w / 10]) + #09+ 'ток инвертора';
-
-                            {Buf[09]..Buf[10]: максимум входного напряжения. }
-                            Move(CurrentRecord.Data[09], w, 2);
-                            s:= #09#09#09#09 + Format('%.1f', [w / 10]) + #09+ 'максимум входного напряжения';
-
-                            {Buf[11]..Buf[12]: минимум входного напряжения. }
-                            Move(CurrentRecord.Data[11], w, 2);
-                            s:= #09#09#09#09 + Format('%.1f', [w / 10]) + #09+ 'минимум входного напряжения';
-
-                            {Buf[13]..Buf[14]: обороты генератора. }
-                            Move(CurrentRecord.Data[13], w, 2);
-                            s:= #09#09#09#09 + IntToStr(w) + #09+ 'обороты генератора';
-
-                            {Buf[15]..Buf[16]: сопротивление нагрузки. }
-                            Move(CurrentRecord.Data[15], w, 2);
-                            s:= #09#09#09#09 + Format('%.3f', [w / 1000]) + #09+ 'сопротивление нагрузки';
-
-                            {Buf[17]: средняя величина удара превышающего 50G (в G) по оси Х. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[17]) + #09+ 'средняя величина  удара превышающего  50G (в G) по оси Х';
-
-                            {Buf[18]..Buf[21]: время длит. сред. удара превышающего 50G (*25мкс) по оси Х. }
-                            Move(CurrentRecord.Data[18], i, 4);
-                            s:= #09#09#09#09 + IntToStr(i) + #09+ 'время длит. сред. удара превышающего 50G (*25мкс) по оси Х';
-
-                            {Buf[22]: средняя величина удара превышающего 50G (в G) по оси Y. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[22]) + #09+ 'средняя величина удара превышающего 50G (в G) по оси Y';
-
-                            {Buf[23]..Buf[26]: время длит. сред. удара превышающего 50G (*25мкс) по оси Y. }
-                            Move(CurrentRecord.Data[23], i, 4);
-                            s:= #09#09#09#09 + IntToStr(i) + #09+ 'время длит. сред. удара превышающего 50G (*25мкс) по оси Y';
-
-                            {Buf[27]: средняя величина удара превышающего 50G (в G) по оси Z. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[27]) + #09+ 'средняя величина удара превышающего 50G (в G) по оси Z';
-
-                            {Buf[28]..Buf[31]: время длит. сред. удара превышающего 50G (*25мкс) по оси Z. }
-                            Move(CurrentRecord.Data[28], i, 4);
-                            s:= #09#09#09#09 + IntToStr(i) + #09+ 'время длит. сред. удара превышающего 50G (*25мкс) по оси Z';
-
-                            {Buf[32]: максимум по оси Х. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[32]) + #09+ 'максимум по оси Х';
-
-                            {Buf[33]: максимум по оси Y. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[33]) + #09+ 'максимум по оси Y';
-
-                            {Buf[34]: максимум по оси Z. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[34]) + #09+ 'максимум по оси Z';
-
-                            {Buf[35]: температура силового модуля. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[35]) + '°'#09+ 'температура силового модуля';
-                          end;
-                          {$ENDREGION}
-
-                      02: {$REGION ' версия №02 '}
-                          begin
-                            {Buf[07]..Buf[08]: ток инвертора. }
-                            Move(CurrentRecord.Data[07], w, 2);
-                            s:= #09#09#09#09 + Format('%.1f', [w / 10]) + #09+ 'ток инвертора';
-
-                            {Buf[09]..Buf[10]: максимум входного напряжения. }
-                            Move(CurrentRecord.Data[09], w, 2);
-                            s:= #09#09#09#09 + Format('%.1f', [w / 10]) + #09+ 'максимум входного напряжения';
-
-                            {Buf[11]..Buf[12]: минимум входного напряжения. }
-                            Move(CurrentRecord.Data[11], w, 2);
-                            s:= #09#09#09#09 + Format('%.1f', [w / 10]) + #09+ 'минимум входного напряжения';
-
-                            {Buf[13]..Buf[14]: обороты генератора. }
-                            Move(CurrentRecord.Data[13], w, 2);
-                            s:= #09#09#09#09 + IntToStr(w) + #09+ 'обороты генератора';
-
-                            {Buf[15]..Buf[16]: сопротивление нагрузки. }
-                            Move(CurrentRecord.Data[15], w, 2);
-                            s:= #09#09#09#09 + Format('%.3f', [w / 1000]) + #09+ 'сопротивление нагрузки';
-
-                            {Buf[17]..Buf[20]: время длит. сред. удара превышающего 50G (*25мкс) по оси Х. }
-                            Move(CurrentRecord.Data[17], i, 4);
-                            s:= #09#09#09#09 + IntToStr(i) + #09+ 'время длит. сред. удара превышающего 50G (*25мкс) по оси Х';
-
-                            {Buf[21]: максимум по оси Х. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[21]) + #09+ 'максимум по оси Х';
-
-                            {Buf[22]: максимум по оси Y. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[22]) + #09+ 'максимум по оси Y';
-
-                            {Buf[23]: максимум по оси Z. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[23]) + #09+ 'максимум по оси Z';
-
-
-                            {Buf[24]: температура силового модуля. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[24]) + '°'#09+ 'температура силового модуля';
-                          end;
-                          {$ENDREGION}
-
-                      03: {$REGION ' версия №03 '}
-                          begin
-                            {Buf[07]..Buf[08]: код телеметрии пульсатора. }
-                            Move(CurrentRecord.Data[07], w, 2);
-                            s:= #09#09#09#09 + IntToStr(w) + #09+ 'код телеметрии пульсатора';
-
-                            {Buf[09]..Buf[10]: обороты генератора. }
-                            Move(CurrentRecord.Data[09], w, 2);
-                            s:= #09#09#09#09 + IntToStr(w) + #09+ 'обороты генератора';
-
-                            {Buf[11]..Buf[14]: время длит. сред. удара превышающего 50G (*25мкс). }
-                            Move(CurrentRecord.Data[11], i, 4);
-                            s:= #09#09#09#09 + IntToStr(i) + #09+ 'время длит. сред. удара, превышающего 50G (*25мкс)';
-
-                            {Buf[15]: максимум по оси Х. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[15]) + #09+ 'максимум по оси Х';
-
-                            {Buf[16]: максимум по оси Y. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[16]) + #09+ 'максимум по оси Y';
-
-                            {Buf[17]: максимум по оси Z. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[17]) + #09+ 'максимум по оси Z';
-
-                            {Buf[18]: температура силового модуля. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[18]) + '°'#09+ 'температура силового модуля';
-                          end;
-                          {$ENDREGION}
-
-                      04: {$REGION ' версия №04 '}                 {Konovalov 11/01/2018}
-                           begin
-                            {Buf[07]: min_Uc_min. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[07]) + #09+ 'минимальное напряжение на конденсаторе в минимуме (В)';
-
-                            {Buf[08]: max_Uc_min. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[08]) + #09+ 'максимальное напряжение на конденсаторе в минимуме (В)';
-
-                            {Buf[09]: min_Uc_max. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[09]) + #09+ 'минимальное напряжение на конденсаторе в максимуме (В)';
-
-                            {Buf[10]: max_Uc_max. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[10]) + #09+ 'максимальное напряжение на конденсаторе в максимуме (В)';
-
-                            {Buf[11]: min_Uvh_min . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[11]) + #09+ 'минимальное входное напряжение в минимуме (В)';
-
-                            {Buf[12]: max_Uvh_min . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[12]) + #09+ 'максимальное входное напряжение в минимуме (В)';
-
-                            {Buf[13]: min_Uvh_max . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[13]) + #09+ 'минимальное входное напряжение в максимуме (В)';
-
-                            {Buf[14]: max_Uvh_max . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[14]) + #09+ 'максимальное входное напряжение в максимуме (В)';
-
-                            {Buf[15]: min_vremy_1_go_pika  . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[15]) + #09+ 'минимальное время 1-го пика (мс)';
-
-                            {Buf[16]: max_vremy_1_go_pika  . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[16]) + #09+ 'максимальное время 1-го пика (мс)';
-
-                            {Buf[17]: min_ampl_1_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[17]*5) + #09+ 'минимальная амплитуда 1-го пика (мА)';
-
-                            {Buf[18]: max_ampl_1_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[18]*5) + #09+ 'максимальная амплитуда 1-го пика (мА)';
-
-                            {Buf[19]: min_vremy_nach_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[19]) + #09+ 'минимальное время начала 2-го пика (мс)';
-
-                            {Buf[20]: max_vremy_nach_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[20]) + #09+ 'максимальное время начала 2-го пика (мс)';
-
-                            {Buf[21]: min_ampl_nach_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[21]*5) + #09+ 'минимальная амплитуда начала 2-го пика (мА)';
-
-                            {Buf[22]: max_ampl_nach_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[22]*5) + #09+ 'максимальная амплитуда начала 2-го пика (мА)';
-
-                            {Buf[23]: min_vremy_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[23]) + #09+ 'минимальное время 2-го пика (мс)';
-
-                            {Buf[24]: max_vremy_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[24]) + #09+ 'максимальное время 2-го пика (мс)';
-
-                            {Buf[25]: min_ampl_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[25]*5) + #09+ 'минимальная амплитуда 2-го пика (мА)';
-
-                            {Buf[26]: max_ampl_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[26]*5) + #09+ 'максимальная амплитуда 2-го пика (мА)';
-
-                            {Buf[27]: min_vremy_nach_uderj   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[27]) + #09+ 'минимальное время начала удержания (мс)';
-
-                            {Buf[28]: max_vremy_nach_uderj   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[28]) + #09+ 'максимальное время начала удержания (мс)';
-
-                            {Buf[29]: ct_flip_flop   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[29]) + #09+ 'количество ошибок пульсатора';
-
-                            {Buf[30]..Buf[31]: обороты генератора. }
-                            Move(CurrentRecord.Data[30], w, 2);
-                            s:= #09#09#09#09 + IntToStr(w) + #09+ 'обороты генератора (об/мин.)';
-
-                            {Buf[32]..Buf[35]: время длит.  сред. удара превышающего  50G (мкс). }
-                            Move(CurrentRecord.Data[32], i, 4);
-                            s:= #09#09#09#09 + IntToStr(i*25) + #09+ 'время длит.  сред. удара превышающего 50G (мкс)';
-
-                            {Buf[36]: максимум по оси Х. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[37]) + #09+ 'максимум по оси Х (g)';         //поменяли местами ХУ т.к. перепутали на плате 14.04.20 Коновалов
-
-                            {Buf[37]: максимум по оси Y. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[36]) + #09+ 'максимум по оси Y (g)';
-
-                            {Buf[38]: максимум по оси Z. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[38]) + #09+ 'максимум по оси Z (g)';
-
-                            {Buf[39]..Buf[40]: код телеметрии. }
-                            Move(CurrentRecord.Data[39], w, 2);
-                            s:= #09#09#09#09 + IntToStr(w) + #09+ 'код телеметрии';
-                      end;
-
-                          {$ENDREGION}
-
                       05: {$REGION ' версия №05 '}
                           begin
                             {Buf[07]..Buf[08]: ток инвертора. }
@@ -1577,81 +1353,104 @@ begin
                       08: {$REGION ' версия №08 MUP '}                 {Konovalov 11/01/2018}
                            begin
                             {Buf[07]: min_Uc_min. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[07]) + #09+ 'минимальное напряжение на конденсаторе в минимуме (В)';
+                            U1:= CurrentRecord.Data[7];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('UCmiVmi'), U1);
 
                             {Buf[08]: max_Uc_min. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[08]) + #09+ 'максимальное напряжение на конденсаторе в минимуме (В)';
+                            U1:= CurrentRecord.Data[8];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('UCmaVmi'), U1);
 
                             {Buf[09]: min_Uc_max. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[09]) + #09+ 'минимальное напряжение на конденсаторе в максимуме (В)';
+                            U1:= CurrentRecord.Data[9];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('UCmiVma'), U1);
 
                             {Buf[10]: max_Uc_max. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[10]) + #09+ 'максимальное напряжение на конденсаторе в максимуме (В)';
+                            U1:= CurrentRecord.Data[10];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('UCmaVma'), U1);
 
                             {Buf[11]: min_Uvh_min . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[11]) + #09+ 'минимальное входное напряжение в минимуме (В)';
+                            U1:= CurrentRecord.Data[11];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('UImiVmi'), U1);
 
                             {Buf[12]: max_Uvh_min . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[12]) + #09+ 'максимальное входное напряжение в минимуме (В)';
+                            U1:= CurrentRecord.Data[12];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('UImaVmi'), U1);
 
                             {Buf[13]: min_Uvh_max . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[13]) + #09+ 'минимальное входное напряжение в максимуме (В)';
+                            U1:= CurrentRecord.Data[13];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('UImiVma'), U1);
 
                             {Buf[14]: max_Uvh_max . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[14]) + #09+ 'максимальное входное напряжение в максимуме (В)';
+                            U1:= CurrentRecord.Data[14];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('UImaVma'), U1);
 
                             {Buf[15]: min_vremy_1_go_pika  . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[15]) + #09+ 'минимальное время 1-го пика (мс)';
+                            U1:= CurrentRecord.Data[15];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Tmin1'), U1);
 
                             {Buf[16]: max_vremy_1_go_pika  . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[16]) + #09+ 'максимальное время 1-го пика (мс)';
+                            U1:= CurrentRecord.Data[16];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Tmax1'), U1);
 
                             {Buf[17]: min_ampl_1_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[17]*5) + #09+ 'минимальная амплитуда 1-го пика (мА)';
+                            U1:= CurrentRecord.Data[17];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Amin1'), U1);
 
                             {Buf[18]: max_ampl_1_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[18]*5) + #09+ 'максимальная амплитуда 1-го пика (мА)';
+                            U1:= CurrentRecord.Data[18];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Amax1'), U1);
 
                             {Buf[19]: min_vremy_nach_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[19]) + #09+ 'минимальное время начала 2-го пика (мс)';
+                            U1:= CurrentRecord.Data[19];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Tmin2st'), U1);
 
                             {Buf[20]: max_vremy_nach_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[20]) + #09+ 'максимальное время начала 2-го пика (мс)';
+                            U1:= CurrentRecord.Data[20];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Tmax2st'), U1);
 
                             {Buf[21]: min_ampl_nach_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[21]*5) + #09+ 'минимальная амплитуда начала 2-го пика (мА)';
+                            U1:= CurrentRecord.Data[21];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Amin2st'), U1);
 
                             {Buf[22]: max_ampl_nach_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[22]*5) + #09+ 'максимальная амплитуда начала 2-го пика (мА)';
+                            U1:= CurrentRecord.Data[22];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Amax2st'), U1);
 
                             {Buf[23]: min_vremy_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[23]) + #09+ 'минимальное время 2-го пика (мс)';
+                            U1:= CurrentRecord.Data[23];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Tmin2'), U1);
 
                             {Buf[24]: max_vremy_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[24]) + #09+ 'максимальное время 2-го пика (мс)';
+                            U1:= CurrentRecord.Data[24];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Tmax2'), U1);
 
                             {Buf[25]: min_ampl_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[25]*5) + #09+ 'минимальная амплитуда 2-го пика (мА)';
+                            U1:= CurrentRecord.Data[25];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Amin2'), U1);
 
                             {Buf[26]: max_ampl_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[26]*5) + #09+ 'максимальная амплитуда 2-го пика (мА)';
+                            U1:= CurrentRecord.Data[26];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Amax2'), U1);
 
                             {Buf[27]: min_vremy_nach_uderj   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[27]) + #09+ 'минимальное время начала удержания (мс)';
+                            U1:= CurrentRecord.Data[27];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('TminRet'), U1);
 
                             {Buf[28]: max_vremy_nach_uderj   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[28]) + #09+ 'максимальное время начала удержания (мс)';
+                            U1:= CurrentRecord.Data[28];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('TmaxRet'), U1);
 
                             {Buf[29]: ct_flip_flop   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[29]) + #09+ 'количество ошибок пульсатора';
+                            U1:= CurrentRecord.Data[29];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Nerror'), U1);
 
-                            {Buf[30]..Buf[31]: обороты генератора. CRPM}
+                            {Buf[30]..Buf[31]: обороты генератора. TRPM}
                             Move(CurrentRecord.Data[30], U2, 2);
-                            TffFrames.AddData(TffStructure.GetTFFDataChannels[9].Offset, U2);
+                            TffFrames.AddData(TffStructure.GetOffsetByName('TRPM'), U2);
 
                             {Buf[32]..Buf[35]: время длит.  сред. удара превышающего  50G (мкс). }
                             Move(CurrentRecord.Data[32], I4, 4);
-                            //TffFrames.AddData(TffStructure.GetTFFDataChannels[15].Offset, I4);
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Th50G'), I4);
 
                             {Buf[36]: максимум по оси Х. }
                             U1:= CurrentRecord.Data[37];         //поменяли местами ХУ т.к. перепутали на плате 14.04.20 Коновалов
@@ -1697,84 +1496,104 @@ begin
                       10: {$REGION ' версия №08 MUP '}                 {Konovalov 06/06/2022}
                            begin
                             {Buf[07]: min_Uc_min. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[07]) + #09+ 'минимальное напряжение на конденсаторе в минимуме (В)';
+                            U1:= CurrentRecord.Data[7];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('UCmiVmi'), U1);
 
                             {Buf[08]: max_Uc_min. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[08]) + #09+ 'максимальное напряжение на конденсаторе в минимуме (В)';
+                            U1:= CurrentRecord.Data[8];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('UCmaVmi'), U1);
 
                             {Buf[09]: min_Uc_max. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[09]) + #09+ 'минимальное напряжение на конденсаторе в максимуме (В)';
+                            U1:= CurrentRecord.Data[9];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('UCmiVma'), U1);
 
                             {Buf[10]: max_Uc_max. }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[10]) + #09+ 'максимальное напряжение на конденсаторе в максимуме (В)';
+                            U1:= CurrentRecord.Data[10];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('UCmaVma'), U1);
 
                             {Buf[11]: min_Uvh_min . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[11]) + #09+ 'минимальное входное напряжение в минимуме (В)';
+                            U1:= CurrentRecord.Data[11];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('UImiVmi'), U1);
 
                             {Buf[12]: max_Uvh_min . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[12]) + #09+ 'максимальное входное напряжение в минимуме (В)';
+                            U1:= CurrentRecord.Data[12];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('UImaVmi'), U1);
 
                             {Buf[13]: min_Uvh_max . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[13]) + #09+ 'минимальное входное напряжение в максимуме (В)';
+                            U1:= CurrentRecord.Data[13];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('UImiVma'), U1);
 
                             {Buf[14]: max_Uvh_max . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[14]) + #09+ 'максимальное входное напряжение в максимуме (В)';
-
+                            U1:= CurrentRecord.Data[14];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('UImaVma'), U1);
 
                             {Buf[15]: min_vremy_1_go_pika  . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[15]) + #09+ 'минимальное время 1-го пика (мс)';
+                            U1:= CurrentRecord.Data[15];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Tmin1'), U1);
 
                             {Buf[16]: max_vremy_1_go_pika  . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[16]) + #09+ 'максимальное время 1-го пика (мс)';
+                            U1:= CurrentRecord.Data[16];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Tmax1'), U1);
 
                             {Buf[17]: min_ampl_1_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[17]*5) + #09+ 'минимальная амплитуда 1-го пика (мА)';
+                            U1:= CurrentRecord.Data[17];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Amin1'), U1);
 
                             {Buf[18]: max_ampl_1_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[18]*5) + #09+ 'максимальная амплитуда 1-го пика (мА)';
-
+                            U1:= CurrentRecord.Data[18];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Amax1'), U1);
 
                             {Buf[19]: min_vremy_nach_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[19]) + #09+ 'минимальное время начала 2-го пика (мс)';
+                            U1:= CurrentRecord.Data[19];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Tmin2st'), U1);
 
                             {Buf[20]: max_vremy_nach_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[20]) + #09+ 'максимальное время начала 2-го пика (мс)';
+                            U1:= CurrentRecord.Data[20];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Tmax2st'), U1);
 
                             {Buf[21]: min_ampl_nach_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[21]*5) + #09+ 'минимальная амплитуда начала 2-го пика (мА)';
+                            U1:= CurrentRecord.Data[21];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Amin2st'), U1);
 
                             {Buf[22]: max_ampl_nach_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[22]*5) + #09+ 'максимальная амплитуда начала 2-го пика (мА)';
+                            U1:= CurrentRecord.Data[22];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Amax2st'), U1);
 
                             {Buf[23]: min_vremy_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[23]) + #09+ 'минимальное время 2-го пика (мс)';
+                            U1:= CurrentRecord.Data[23];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Tmin2'), U1);
 
                             {Buf[24]: max_vremy_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[24]) + #09+ 'максимальное время 2-го пика (мс)';
-
+                            U1:= CurrentRecord.Data[24];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Tmax2'), U1);
 
                             {Buf[25]: min_ampl_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[25]*5) + #09+ 'минимальная амплитуда 2-го пика (мА)';
+                            U1:= CurrentRecord.Data[25];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Amin2'), U1);
 
                             {Buf[26]: max_ampl_2_go_pika   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[26]*5) + #09+ 'максимальная амплитуда 2-го пика (мА)';
+                            U1:= CurrentRecord.Data[26];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Amax2'), U1);
 
                             {Buf[27]: min_vremy_nach_uderj   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[27]) + #09+ 'минимальное время начала удержания (мс)';
+                            U1:= CurrentRecord.Data[27];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('TminRet'), U1);
 
                             {Buf[28]: max_vremy_nach_uderj   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[28]) + #09+ 'максимальное время начала удержания (мс)';
+                            U1:= CurrentRecord.Data[28];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('TmaxRet'), U1);
 
                             {Buf[29]: ct_flip_flop   . }
-                            s:= #09#09#09#09 + IntToStr(CurrentRecord.Data[29]) + #09+ 'количество ошибок пульсатора';
+                            U1:= CurrentRecord.Data[29];
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Nerror'), U1);
 
                             {Buf[30]..Buf[31]: обороты генератора. }
-                            Move(CurrentRecord.Data[30], w, 2);
-                            s:= #09#09#09#09 + IntToStr(w) + #09+ 'обороты генератора (об/мин.)';
+                            Move(CurrentRecord.Data[30], U2, 2);
+                            TffFrames.AddData(TffStructure.GetOffsetByName('TRPM'), U2);
 
                             {Buf[32]..Buf[35]: время длит.  сред. удара превышающего  50G (мкс). }
-                            Move(CurrentRecord.Data[32], i, 4);
-                            s:= #09#09#09#09 + IntToStr(i*25) + #09+ 'время длит.  сред. удара превышающего 50G (мкс)';
+                            Move(CurrentRecord.Data[32], I4, 4);
+                            TffFrames.AddData(TffStructure.GetOffsetByName('Th50G'), I4);
 
                             {Buf[36]: максимум по оси Х. }
                             U1:= CurrentRecord.Data[37];         //поменяли местами ХУ т.к. перепутали на плате 14.04.20 Коновалов
@@ -1943,11 +1762,11 @@ begin
                   end;
                   {$ENDREGION}
             end;  // case
-        end;  // IsValidDateTime
 
-        end;  // CurrentRecord.N
-      end;
-  until EndOfFile;
+        end;  { IsValidDateTime }
+      end;  { CurrentRecord.N }
+    end; { b = $C0 }
+  until EndOfFile Or (ErrorCode > 0);
   Result:= TffFrames.GetFrameRecords;
   TffFrames.Done;
 end;

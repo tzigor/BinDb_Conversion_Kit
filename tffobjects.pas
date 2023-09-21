@@ -91,10 +91,10 @@ implementation
   procedure TTffStructure.AddChannel(DLIS, Units, RepCode, Samples: String; TffVersion: Byte);
   var TffDataChannel: TTffDataChannel;
   begin
-    TffDataChannel.DLIS:= DLIS;
-    TffDataChannel.Samples:= Samples;
-    TffDataChannel.Units:= Units;
-    TffDataChannel.RepCode:= RepCode;
+    TffDataChannel.DLIS:= Trim(DLIS);
+    TffDataChannel.Samples:= Trim(Samples);
+    TffDataChannel.Units:= Trim(Units);
+    TffDataChannel.RepCode:= Trim(RepCode);
     case LowerCase(RepCode) of
        'f4', 'f8': TffDataChannel.AbsentValue:= '-999.25';
        'i1'      : TffDataChannel.AbsentValue:= '127';

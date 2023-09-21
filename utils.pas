@@ -43,7 +43,7 @@ begin
     except
       on Exception : EStreamError do
          Result:= Null;
-      end;
+    end;
   finally
     AStream.Free;
   end;
