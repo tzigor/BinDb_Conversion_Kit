@@ -1,17 +1,17 @@
 object App: TApp
-  Left = 2068
-  Height = 621
-  Top = -621
+  Left = 2127
+  Height = 620
+  Top = -689
   Width = 589
-  Caption = 'BinDb Conversion Kit'
-  ClientHeight = 621
+  Caption = 'Bin-Db Conversion Kit'
+  ClientHeight = 620
   ClientWidth = 589
   OnCreate = FormCreate
   Position = poDefaultPosOnly
   LCLVersion = '2.2.4.0'
   object PageControl1: TPageControl
     Left = 0
-    Height = 621
+    Height = 620
     Top = 0
     Width = 589
     ActivePage = MainTab
@@ -20,7 +20,7 @@ object App: TApp
     TabOrder = 0
     object MainTab: TTabSheet
       Caption = 'Main'
-      ClientHeight = 593
+      ClientHeight = 592
       ClientWidth = 581
       object CloseApp: TButton
         Left = 465
@@ -39,67 +39,29 @@ object App: TApp
         BorderStyle = bsNone
         TabOrder = 1
       end
-      object ConvertFile: TButton
-        Left = 248
-        Height = 25
-        Top = 32
-        Width = 120
-        Caption = 'Convert to Bin-Db'
-        OnClick = ConvertFileClick
-        TabOrder = 2
-      end
-      object VersionList: TComboBox
-        Left = 464
-        Height = 23
-        Top = 34
-        Width = 100
-        ItemHeight = 15
-        ItemIndex = 1
-        Items.Strings = (
-          'TFF V2.0'
-          'TFF V3.0'
-          'TFF V4.0'
-        )
-        OnChange = VersionListChange
-        TabOrder = 3
-        Text = 'TFF V3.0'
-      end
-      object Label1: TLabel
-        Left = 392
-        Height = 15
-        Top = 37
-        Width = 62
-        Caption = 'TFF Version:'
-        Font.CharSet = ANSI_CHARSET
-        Font.Color = clNavy
-        Font.Pitch = fpVariable
-        Font.Quality = fqDraft
-        ParentColor = False
-        ParentFont = False
-      end
       object Test: TButton
-        Left = 464
+        Left = 320
         Height = 25
-        Top = 360
+        Top = 552
         Width = 75
         Caption = 'Test'
         OnClick = TestClick
-        TabOrder = 4
+        TabOrder = 2
       end
       object CSVBox: TGroupBox
-        Left = 8
-        Height = 168
-        Top = 136
-        Width = 564
+        Left = 7
+        Height = 176
+        Top = 120
+        Width = 565
         Caption = 'CSV Converter'
-        ClientHeight = 148
-        ClientWidth = 560
-        TabOrder = 5
+        ClientHeight = 156
+        ClientWidth = 561
+        TabOrder = 3
         object ConvertToCSV: TButton
-          Left = 432
+          Left = 441
           Height = 33
-          Top = 104
-          Width = 120
+          Top = 112
+          Width = 112
           Caption = 'Convert to CSV'
           OnClick = ConvertToCSVClick
           TabOrder = 0
@@ -275,6 +237,111 @@ object App: TApp
           Caption = '100S'
           OnChange = S100Change
           TabOrder = 8
+        end
+        object ConvertToTxt: TButton
+          Left = 312
+          Height = 33
+          Top = 112
+          Width = 112
+          Caption = 'Convert to TXT'
+          OnClick = ConvertToTxtClick
+          TabOrder = 10
+        end
+        object Label5: TLabel
+          Left = 323
+          Height = 15
+          Top = 84
+          Width = 170
+          Caption = 'Param lenght for txt conversion:'
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clNavy
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          ParentColor = False
+          ParentFont = False
+        end
+        object TxtLength: TSpinEdit
+          Left = 496
+          Height = 23
+          Top = 80
+          Width = 50
+          TabOrder = 11
+          Value = 12
+        end
+      end
+      object BinDbBox: TGroupBox
+        Left = 8
+        Height = 105
+        Top = 8
+        Width = 565
+        Caption = 'Bin Db Convertor'
+        ClientHeight = 85
+        ClientWidth = 561
+        TabOrder = 4
+        object ConvertFile: TButton
+          Left = 416
+          Height = 33
+          Top = 40
+          Width = 136
+          Caption = 'Convert to Bin-Db'
+          OnClick = ConvertFileClick
+          TabOrder = 0
+        end
+        object Label1: TLabel
+          Left = 8
+          Height = 15
+          Top = 45
+          Width = 62
+          Caption = 'TFF Version:'
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clNavy
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          ParentColor = False
+          ParentFont = False
+        end
+        object VersionList: TComboBox
+          Left = 104
+          Height = 23
+          Top = 40
+          Width = 100
+          ItemHeight = 15
+          ItemIndex = 1
+          Items.Strings = (
+            'TFF V2.0'
+            'TFF V3.0'
+            'TFF V4.0'
+          )
+          OnChange = VersionListChange
+          TabOrder = 1
+          Text = 'TFF V3.0'
+        end
+        object Label3: TLabel
+          Left = 8
+          Height = 15
+          Top = 8
+          Width = 84
+          Caption = 'Source file type:'
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clNavy
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          ParentColor = False
+          ParentFont = False
+        end
+        object FileTypeList: TComboBox
+          Left = 104
+          Height = 23
+          Top = 3
+          Width = 160
+          ItemHeight = 15
+          ItemIndex = 0
+          Items.Strings = (
+            'PCM + DnI - .BIN'
+            'LTB - .LTB'
+          )
+          TabOrder = 2
+          Text = 'PCM + DnI - .BIN'
         end
       end
     end

@@ -33,7 +33,7 @@ type
 
   TCSVConverter = object
   private
-     CSVSeparator       : Char;
+     CSVSeparator    : String;
      Data            : TBytes;
      ParamChannels   : TStringList;
      Measurements    : TStringList;
@@ -44,14 +44,16 @@ type
      AddUnits        : Boolean;
      AddType         : Boolean;
      DateTimeType    : Byte; { 1 - Human Date/Time, 2 - Unix Time, 3 - 100s }
+     ItemLength      : Byte; { length of individual parameters for txt conversion }
   public
-     constructor Init(Separator: Char; IncludeP, IncludeM, AddU, AddT: Boolean; DateType: Byte);
+     constructor Init(Separator: String; IncludeP, IncludeM, AddU, AddT: Boolean; DateType: Byte);
      destructor Done;
      procedure SetIncludeParams(Value: Boolean);
      procedure SetIncludeMeasures(Value: Boolean);
      procedure SetAddUnits(Value: Boolean);
      procedure SetAddType(Value: Boolean);
      procedure SetDateTimeType(Value: Byte);
+     procedure SetItemLength(Value: Byte);
      function GetCSVData(): TStringList;
      function GetRecordLength(): LongWord;
      procedure GetData(Size: LongWord);
@@ -68,10 +70,9 @@ implementation
 
 uses Main;
 
-  constructor TCSVConverter.Init(Separator: Char; IncludeP, IncludeM, AddU, AddT: Boolean; DateType: Byte);
+  constructor TCSVConverter.Init(Separator: String; IncludeP, IncludeM, AddU, AddT: Boolean; DateType: Byte);
   begin
      CSVSeparator:= Separator;
-
      if ParamChannels is TStringList then FreeAndNil(ParamChannels);
      ParamChannels:= TStringList.Create;
 
@@ -87,6 +88,7 @@ uses Main;
      AddUnits:= AddU;
      AddType:= AddT;
      DateTimeType:= DateType;
+     ItemLength:= 12;
   end;
 
   destructor TCSVConverter.Done;
@@ -116,6 +118,11 @@ uses Main;
   procedure TCSVConverter.SetDateTimeType(Value: Byte);
   begin
      DateTimeType:= Value;
+  end;
+
+  procedure TCSVConverter.SetItemLength(Value: Byte);
+  begin
+     ItemLength:= Value;
   end;
 
   function TCSVConverter.GetCSVData(): TStringList;
@@ -266,7 +273,7 @@ uses Main;
         case ChannelsList[i].RepCode of
           'F4': begin
                   Move(Data[DataCount], F4, 4);
-                  if i = 0 then begin
+                  if i = 0 then begin  { if TIME channel }
                      if DateTimeType = 1 then FrameStr:= DateTimeToStr(IncMilliSecond(StartDate, Round(F4 * 100000 )))
                      else if DateTimeType = 2 then FrameStr:= IntToStr(DateTimeToUnix(IncMilliSecond(StartDate, Round(F4 * 100000 ))))
                           else FrameStr:= FloatToStrF(F4, ffFixed, 10, App.FloatDigits.Value);
@@ -315,19 +322,22 @@ uses Main;
                    Inc(DataCount, 8);
                 end
         end;
-        Frame:= Frame + FrameStr + CSVSeparator;
+        if CSVSeparator <> '' then Frame:= Frame + FrameStr + CSVSeparator
+        else if i = 0 then Frame:= Frame + SetStringLength(FrameStr, 20) { convert to TXT} { i=0 mean TIME }
+             else Frame:= Frame + SetStringLength(FrameStr, ItemLength)
      end;
      Result:= Frame;
   end;
 
   procedure TCSVConverter.CSVComposer();
-  var RecordLength  : LongWord;
-      RecordType    : Char;
-      isFirstFrame  : Boolean;
-      Channels      : String;
-      NewParameter  : String;
-      DataChannels  : TDataChannels;
-      ChannelsCount : Word;
+  var RecordLength   : LongWord;
+      RecordType     : Char;
+      isFirstFrame   : Boolean;
+      Channels       : String;
+      NewParameter   : String;
+      DataChannels   : TDataChannels;
+      ChannelsCount  : Word;
+      CurrentChannel : String;
   begin
     Channels:= '';
     ChannelsCount:= 0;
@@ -346,10 +356,14 @@ uses Main;
           'M': Measurements.Add(MeasurementToStr(ParseMeasurement));
           'D': begin
                   Insert(ParseDataChannel(RecordLength), DataChannels, DATA_MAX_SIZE);
-                  Channels:= Channels + DataChannels[ChannelsCount].DLISName;
-                  if AddUnits then Channels:= Channels + '(' + DataChannels[ChannelsCount].Units + ')';
-                  if AddType then Channels:= Channels + '(' + DataChannels[ChannelsCount].RepCode + ')';
-                  Channels:= Channels + CSVSeparator;
+                  CurrentChannel:= DataChannels[ChannelsCount].DLISName;
+                  if AddUnits then CurrentChannel:= CurrentChannel + '(' + DataChannels[ChannelsCount].Units + ')';
+                  if AddType then CurrentChannel:= CurrentChannel + '(' + DataChannels[ChannelsCount].RepCode + ')';
+
+                  if CSVSeparator <> '' then Channels:= Channels + CurrentChannel + CSVSeparator
+                  else if ChannelsCount = 0 then Channels:= Channels + SetStringLength(CurrentChannel, 20) { convert to TXT} { ChannelsCount=0 mean TIME }
+                       else Channels:= Channels + SetStringLength(CurrentChannel, ItemLength);
+
                   Inc(ChannelsCount);
                end;
           'F': begin

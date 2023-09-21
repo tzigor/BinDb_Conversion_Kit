@@ -10,7 +10,7 @@
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
         <CursorPos X="51" Y="13"/>
-        <UsageCount Value="113"/>
+        <UsageCount Value="117"/>
       </Unit>
       <Unit>
         <Filename Value="main.pas"/>
@@ -19,9 +19,9 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="Main"/>
-        <TopLine Value="57"/>
-        <CursorPos X="16" Y="131"/>
-        <UsageCount Value="113"/>
+        <TopLine Value="148"/>
+        <CursorPos X="63" Y="166"/>
+        <UsageCount Value="117"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit>
@@ -30,9 +30,9 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="Utils"/>
         <EditorIndex Value="1"/>
-        <TopLine Value="8"/>
-        <CursorPos X="61" Y="99"/>
-        <UsageCount Value="113"/>
+        <TopLine Value="95"/>
+        <CursorPos X="5" Y="112"/>
+        <UsageCount Value="117"/>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
@@ -40,9 +40,9 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="UserTypes"/>
         <EditorIndex Value="2"/>
-        <TopLine Value="82"/>
+        <TopLine Value="79"/>
         <CursorPos X="41" Y="113"/>
-        <UsageCount Value="113"/>
+        <UsageCount Value="117"/>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
@@ -51,7 +51,7 @@
         <UnitName Value="TffObjects"/>
         <EditorIndex Value="3"/>
         <CursorPos X="90" Y="13"/>
-        <UsageCount Value="113"/>
+        <UsageCount Value="117"/>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
@@ -59,30 +59,29 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="BIN_DB_Converter"/>
         <EditorIndex Value="4"/>
-        <TopLine Value="22"/>
         <CursorPos X="17"/>
-        <UsageCount Value="113"/>
+        <UsageCount Value="117"/>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
         <Filename Value="parsebin.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="ParseBin"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="6"/>
-        <TopLine Value="64"/>
-        <CursorPos X="119" Y="1585"/>
-        <UsageCount Value="113"/>
+        <TopLine Value="907"/>
+        <CursorPos X="91" Y="1445"/>
+        <UsageCount Value="117"/>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
         <Filename Value="csv_converter.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="CSV_Converter"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="5"/>
-        <TopLine Value="281"/>
-        <CursorPos X="41" Y="363"/>
-        <UsageCount Value="113"/>
+        <TopLine Value="345"/>
+        <CursorPos X="95" Y="365"/>
+        <UsageCount Value="117"/>
         <Loaded Value="True"/>
       </Unit>
       <Unit>
@@ -144,123 +143,123 @@
     <JumpHistory HistoryIndex="29">
       <Position>
         <Filename Value="parsebin.pas"/>
-        <Caret Line="1455" TopLine="1423"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="1456" TopLine="1438"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="1459" TopLine="1438"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="1460" TopLine="1438"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="1463" TopLine="1438"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="1464" TopLine="1438"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="1467" TopLine="1438"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="1468" TopLine="1438"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="1471" TopLine="1439"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="1472" TopLine="1440"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="1475" TopLine="1443"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="1476" TopLine="1444"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="1477" TopLine="1445"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="1480" TopLine="1448"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="1481" TopLine="1449"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="1482" TopLine="1450"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="1760" TopLine="1729"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="165" TopLine="146"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="166" TopLine="146"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="168" TopLine="146"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="169" TopLine="146"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="170" TopLine="146"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="171" TopLine="146"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="172" TopLine="146"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="171" TopLine="146"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="288" Column="103" TopLine="264"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="254" Column="17" TopLine="237"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="191" Column="3" TopLine="172"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
-        <Caret Line="1593" Column="111" TopLine="1586"/>
-      </Position>
-      <Position>
-        <Filename Value="parsebin.pas"/>
         <Caret Line="1451" Column="59" TopLine="1434"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="138" Column="71" TopLine="111"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="140" Column="127" TopLine="119"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="118" Column="26" TopLine="93"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="119" Column="26" TopLine="119"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="118" Column="26" TopLine="118"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="117" Column="26" TopLine="117"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="116" Column="26" TopLine="116"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="119" Column="26" TopLine="119"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="120" Column="26" TopLine="120"/>
+      </Position>
+      <Position>
+        <Filename Value="csv_converter.pas"/>
+        <Caret Line="74" Column="27" TopLine="57"/>
+      </Position>
+      <Position>
+        <Filename Value="csv_converter.pas"/>
+        <Caret Line="67" Column="98" TopLine="55"/>
+      </Position>
+      <Position>
+        <Filename Value="csv_converter.pas"/>
+        <Caret Line="78" Column="83" TopLine="55"/>
+      </Position>
+      <Position>
+        <Filename Value="csv_converter.pas"/>
+        <Caret Line="319" Column="71" TopLine="302"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="171" Column="32" TopLine="158"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="176" Column="36" TopLine="154"/>
+      </Position>
+      <Position>
+        <Filename Value="csv_converter.pas"/>
+        <Caret Line="315" Column="63" TopLine="296"/>
+      </Position>
+      <Position>
+        <Filename Value="utils.pas"/>
+        <Caret Line="8" Column="41"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="9" Column="28"/>
+      </Position>
+      <Position>
+        <Filename Value="csv_converter.pas"/>
+        <Caret Line="14" Column="143"/>
+      </Position>
+      <Position>
+        <Filename Value="csv_converter.pas"/>
+        <Caret Line="42" Column="104" TopLine="26"/>
+      </Position>
+      <Position>
+        <Filename Value="csv_converter.pas"/>
+        <Caret Line="81" Column="102" TopLine="64"/>
+      </Position>
+      <Position>
+        <Filename Value="csv_converter.pas"/>
+        <Caret Line="323" Column="106" TopLine="303"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="14" Column="129"/>
+      </Position>
+      <Position>
+        <Filename Value="csv_converter.pas"/>
+        <Caret Line="357" TopLine="341"/>
+      </Position>
+      <Position>
+        <Filename Value="csv_converter.pas"/>
+        <Caret Line="358" TopLine="341"/>
+      </Position>
+      <Position>
+        <Filename Value="csv_converter.pas"/>
+        <Caret Line="359" TopLine="341"/>
+      </Position>
+      <Position>
+        <Filename Value="csv_converter.pas"/>
+        <Caret Line="360" TopLine="341"/>
+      </Position>
+      <Position>
+        <Filename Value="csv_converter.pas"/>
+        <Caret Line="361" TopLine="341"/>
+      </Position>
+      <Position>
+        <Filename Value="csv_converter.pas"/>
+        <Caret Line="370" Column="125" TopLine="344"/>
       </Position>
     </JumpHistory>
     <RunParams>

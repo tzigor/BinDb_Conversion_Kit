@@ -18,10 +18,18 @@ type
     AddMeasure: TCheckBox;
     AddUnitsFlag: TCheckBox;
     AddTypeFlag: TCheckBox;
+    ConvertToTxt: TButton;
+    FileTypeList: TComboBox;
+    ConvertFile: TButton;
     ConvertToCSV: TButton;
     CSVBox: TGroupBox;
+    BinDbBox: TGroupBox;
     HumanTime: TRadioButton;
+    Label1: TLabel;
+    Label3: TLabel;
+    Label5: TLabel;
     S100: TRadioButton;
+    TxtLength: TSpinEdit;
     UnixTime: TRadioButton;
     TimeEx: TLabel;
     TempHead: TLabel;
@@ -32,14 +40,12 @@ type
     Label2: TLabel;
     FloatDigits: TSpinEdit;
     Test: TButton;
-    Label1: TLabel;
-    VersionList: TComboBox;
-    ConvertFile: TButton;
     CloseApp: TButton;
     FileName: TEdit;
     OpenDialog: TOpenDialog;
     PageControl1: TPageControl;
     MainTab: TTabSheet;
+    VersionList: TComboBox;
     procedure AddMeasureChange(Sender: TObject);
     procedure AddParametersChange(Sender: TObject);
     procedure AddTypeFlagChange(Sender: TObject);
@@ -47,6 +53,7 @@ type
     procedure CloseAppClick(Sender: TObject);
     procedure ConvertFileClick(Sender: TObject);
     procedure ConvertToCSVClick(Sender: TObject);
+    procedure ConvertToTxtClick(Sender: TObject);
     procedure FloatDigitsChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure HumanTimeChange(Sender: TObject);
@@ -91,6 +98,117 @@ begin
   App.Close;
 end;
 
+
+procedure TApp.ConvertFileClick(Sender: TObject);
+begin
+  if LoadSourceFile('bin', 100) then begin
+     FileName.Text:= CurrentOpenedFile;
+
+     TFFDataChannelsSet(TFFVersion);
+     FrameRecords:= BinParser;
+     BinDbConverter.Init(TFFVersion, FrameRecords);
+
+     BinDbConverter.CreateParameters();
+     BinDbConverter.AddParameter('FORMAT=PC');
+     BinDbConverter.AddParameter('TYPE=TFF');
+     BinDbConverter.AddParameter('ToolId type=SIB');
+     BinDbConverter.AddParameter('ToolId MfgCode=SIB');
+
+     BinDbConverter.ChannelsComposer(TffStructure.GetTFFDataChannels);
+
+     BinDbConverter.FramesComposer(FrameRecords);
+
+     SaveByteArray(BinDbConverter.GetBinDbData, ReplaceText(CurrentOpenedFile,'.bin','') + '.bin_db');
+     Application.MessageBox('File converted','', MB_ICONINFORMATION + MB_OK);
+
+     BinDbConverter.Done;
+  end;
+end;
+
+procedure TApp.ConvertToCSVClick(Sender: TObject);
+var Date_Time_Type: Byte;
+begin
+  if LoadSourceFile('bin_db', 100) then begin
+     if HumanTime.Checked then Date_Time_Type:= 1;
+     if UnixTime.Checked then Date_Time_Type:= 2;
+     if S100.Checked then Date_Time_Type:= 3;
+
+     CSVConverter.Init(SeparatorChar.Text[1],
+                       AddParameters.Checked,
+                       AddMeasure.Checked,
+                       AddUnitsFlag.Checked,
+                       AddTypeFlag.Checked,
+                       Date_Time_Type);
+
+     CSVConverter.CSVComposer;
+     try
+       CSVConverter.GetCSVData.SaveToFile(ReplaceText(CurrentOpenedFile,'.bin_db','') + '.csv');
+       Application.MessageBox('File converted','', MB_ICONINFORMATION + MB_OK);
+     except
+       Application.MessageBox('Unable to save CSV file. Probably it is being used by another process','Error', MB_ICONERROR + MB_OK);
+     end;
+     CSVConverter.Done;
+  end;
+end;
+
+procedure TApp.ConvertToTxtClick(Sender: TObject);
+var Date_Time_Type: Byte;
+begin
+  if LoadSourceFile('bin_db', 100) then begin
+     if HumanTime.Checked then Date_Time_Type:= 1;
+     if UnixTime.Checked then Date_Time_Type:= 2;
+     if S100.Checked then Date_Time_Type:= 3;
+
+     CSVConverter.Init('',
+                       AddParameters.Checked,
+                       AddMeasure.Checked,
+                       AddUnitsFlag.Checked,
+                       AddTypeFlag.Checked,
+                       Date_Time_Type);
+
+     CSVConverter.SetItemLength(TxtLength.Value);
+     CSVConverter.CSVComposer;
+     try
+       CSVConverter.GetCSVData.SaveToFile(ReplaceText(CurrentOpenedFile,'.bin_db','') + '.txt');
+       Application.MessageBox('File converted','', MB_ICONINFORMATION + MB_OK);
+     except
+       Application.MessageBox('Unable to save TXT file. Probably it is being used by another process','Error', MB_ICONERROR + MB_OK);
+     end;
+     CSVConverter.Done;
+  end;
+end;
+
+procedure TApp.FloatDigitsChange(Sender: TObject);
+begin
+  NumberEx.Caption:= FloatToStrF(ExampleValue, ffFixed, 10, FloatDigits.Value);
+end;
+
+procedure TApp.FormCreate(Sender: TObject);
+begin
+  TFFVersion:= TFF_V30; // By default
+  NumberEx.Caption:= FloatToStrF(ExampleValue, ffFixed, 10, FloatDigits.Value);
+end;
+
+procedure TApp.SeparatorCharChange(Sender: TObject);
+begin
+  if SeparatorChar.Text = '' then SeparatorChar.Text:= ';';
+end;
+
+function SetStringLength(Str: String; n: Word): String;
+begin
+  Result:= AddCharR(' ', LeftBStr(Str, n), n);
+end;
+
+procedure TApp.TestClick(Sender: TObject);
+var s: String;
+begin
+  s:= '12345';
+  s:= SetStringLength(s, 3);
+  ShowMessage(s);
+end;
+
+
+
 procedure TApp.AddUnitsFlagChange(Sender: TObject);
 begin
   CSVConverter.SetAddUnits(AddUnitsFlag.Checked);
@@ -129,87 +247,6 @@ end;
 procedure TApp.AddMeasureChange(Sender: TObject);
 begin
   CSVConverter.SetIncludeMeasures(AddMeasure.Checked);
-end;
-
-procedure TApp.ConvertFileClick(Sender: TObject);
-begin
-  if LoadSourceFile('bin', 100) then begin
-     FileName.Text:= CurrentOpenedFile;
-
-     TFFDataChannelsSet(TFFVersion);
-     FrameRecords:= BinParser;
-     BinDbConverter.Init(TFFVersion, FrameRecords);
-
-     BinDbConverter.CreateParameters();
-     BinDbConverter.AddParameter('FORMAT=PC');
-     BinDbConverter.AddParameter('TYPE=TFF');
-     BinDbConverter.AddParameter('ToolId type=SIB');
-     BinDbConverter.AddParameter('ToolId MfgCode=SIB');
-
-     BinDbConverter.ChannelsComposer(TffStructure.GetTFFDataChannels);
-
-     BinDbConverter.FramesComposer(FrameRecords);
-
-     SaveByteArray(BinDbConverter.GetBinDbData, ReplaceText(CurrentOpenedFile,'.bin','') + '.bin_db');
-
-     BinDbConverter.Done;
-  end;
-end;
-
-procedure TApp.ConvertToCSVClick(Sender: TObject);
-var Date_Time_Type: Byte;
-begin
-  if LoadSourceFile('bin_db', 100) then begin
-     if HumanTime.Checked then Date_Time_Type:= 1;
-     if UnixTime.Checked then Date_Time_Type:= 2;
-     if S100.Checked then Date_Time_Type:= 3;
-
-     CSVConverter.Init(SeparatorChar.Text[1],
-                       AddParameters.Checked,
-                       AddMeasure.Checked,
-                       AddUnitsFlag.Checked,
-                       AddTypeFlag.Checked,
-                       Date_Time_Type);
-
-     CSVConverter.CSVComposer;
-     try
-       CSVConverter.GetCSVData.SaveToFile('test.csv');
-     except
-       Application.MessageBox('Unable to save CSV file. Probably it is being used by another process','Error', MB_ICONERROR + MB_OK);
-     end;
-     CSVConverter.Done;
-  end;
-end;
-
-procedure TApp.FloatDigitsChange(Sender: TObject);
-begin
-  NumberEx.Caption:= FloatToStrF(ExampleValue, ffFixed, 10, FloatDigits.Value);
-end;
-
-procedure TApp.FormCreate(Sender: TObject);
-begin
-  TFFVersion:= TFF_V30; // By default
-  NumberEx.Caption:= FloatToStrF(ExampleValue, ffFixed, 10, FloatDigits.Value);
-end;
-
-procedure TApp.SeparatorCharChange(Sender: TObject);
-begin
-  if SeparatorChar.Text = '' then SeparatorChar.Text:= ';';
-end;
-
-var s: String;
-
-procedure ChangeS(s: String);
-begin
-  s:= 'ABC';
-end;
-
-procedure TApp.TestClick(Sender: TObject);
-begin
-  s:= '123';
-  ShowMessage(s);
-  ChangeS(s);
-  ShowMessage(s);
 end;
 
 procedure TApp.UnixTimeChange(Sender: TObject);

@@ -5,7 +5,7 @@ unit Utils;
 interface
 
 uses
-  Classes, SysUtils, UserTypes;
+  Classes, SysUtils, UserTypes, StrUtils;
 
 function LoadByteArray(const AFileName: string): TBytes;
 procedure SaveByteArray(AByteArray: TBytes; const AFileName: string);
@@ -23,6 +23,7 @@ function FormatSeconds(i: Integer): String;
 function LoadSourceFile(FileExt: String; MinFileSize: LongWord): Boolean;
 function ReadCurrentByte(): Byte;
 function isEndOfFile(): Boolean;
+function SetStringLength(Str: String; n: Word): String;
 
 implementation
 Uses Main;
@@ -103,6 +104,11 @@ end;
 function GetTypeLegth(wType: String): Byte;
 begin
   Result:= StrToInt(wType[2]);
+end;
+
+function SetStringLength(Str: String; n: Word): String;
+begin
+  Result:= AddCharR(' ', LeftBStr(Str, n), n);
 end;
 
 function InArray(Value: Byte; Arr: TBytes): Boolean;
