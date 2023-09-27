@@ -24,9 +24,21 @@ function LoadSourceFile(FileExt: String; MinFileSize: LongWord): Boolean;
 function ReadCurrentByte(): Byte;
 function isEndOfFile(): Boolean;
 function SetStringLength(Str: String; n: Word): String;
+procedure IncDataOffset(n: LongWord);
+function GetErrorMessage(error: Byte): PChar;
 
 implementation
 Uses Main;
+
+function GetErrorMessage(error: Byte): PChar;
+begin
+  case error of
+     0: Result:= 'NO_ERROR';
+     1: Result:= 'FILE_NOT_FOUND';
+     2: Result:= 'WRONG_FILE_FORMAT';
+     3: Result:= 'UNEXPECTED_END_OF_FILE';
+  end;
+end;
 
 function LoadByteArray(const AFileName: string): TBytes;
 var
@@ -88,8 +100,13 @@ begin
      Result:= Bytes[DataOffset];
      Inc(DataOffset);
      if DataOffset >= currentFileSize then EndOfFile:= True;
-  end
-  else ErrorCode:= UNEXPECTED_END_OF_FILE;
+  end;
+end;
+
+procedure IncDataOffset(n: LongWord);
+var i: LongWord;
+begin
+   for i:=1 to n do ReadCurrentByte;
 end;
 
 function isEndOfFile(): Boolean;

@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ComCtrls, StdCtrls,
   Spin, DateUtils, StrUtils, Utils, UserTypes, ParseBin, TffObjects,
-  BIN_DB_Converter, CSV_Converter, Buttons, LCLType;
+  BIN_DB_Converter, CSV_Converter, Buttons, LCLType, ParseGam2, ParseGam;
 
 type
 
@@ -28,6 +28,7 @@ type
     Label1: TLabel;
     Label3: TLabel;
     Label5: TLabel;
+    ADVSupport: TLabel;
     S100: TRadioButton;
     TxtLength: TSpinEdit;
     UnixTime: TRadioButton;
@@ -39,7 +40,6 @@ type
     SeparatorChar: TEdit;
     Label2: TLabel;
     FloatDigits: TSpinEdit;
-    Test: TButton;
     CloseApp: TButton;
     FileName: TEdit;
     OpenDialog: TOpenDialog;
@@ -59,7 +59,6 @@ type
     procedure HumanTimeChange(Sender: TObject);
     procedure S100Change(Sender: TObject);
     procedure SeparatorCharChange(Sender: TObject);
-    procedure TestClick(Sender: TObject);
     procedure UnixTimeChange(Sender: TObject);
     procedure VersionListChange(Sender: TObject);
   private
@@ -93,36 +92,97 @@ implementation
 
 { TApp }
 
+procedure TApp.FormCreate(Sender: TObject);
+begin
+  ADVSupport.Caption:= '';
+  TFFVersion:= TFF_V30; // By default
+  NumberEx.Caption:= FloatToStrF(ExampleValue, ffFixed, 10, FloatDigits.Value);
+end;
+
 procedure TApp.CloseAppClick(Sender: TObject);
 begin
   App.Close;
 end;
 
+procedure BinToBin_Db();
+begin
+  if LoadSourceFile('bin', 100) then begin
+     App.FileName.Text:= CurrentOpenedFile;
+     BinDataChannelsSet(TFFVersion);
+     FrameRecords:= BinParser;
+     if ErrorCode = NO_ERROR then begin
+
+         BinDbConverter.Init(TFFVersion, FrameRecords);
+         BinDbConverter.CreateParameters();
+         BinDbConverter.AddParameter('FORMAT=PC');
+         BinDbConverter.AddParameter('TYPE=TFF');
+         BinDbConverter.AddParameter('ToolId type=SIB');
+         BinDbConverter.AddParameter('ToolId MfgCode=SIB');
+         BinDbConverter.ChannelsComposer(TffStructure.GetTFFDataChannels);
+         BinDbConverter.FramesComposer(FrameRecords);
+
+         SaveByteArray(BinDbConverter.GetBinDbData, ReplaceText(CurrentOpenedFile,ExtractFileExt(CurrentOpenedFile),'') + '.bin_db');
+         Application.MessageBox('File converted','', MB_ICONINFORMATION + MB_OK);
+
+         BinDbConverter.Done;
+
+     end
+     else Application.MessageBox(GetErrorMessage(ErrorCode),'Error', MB_ICONERROR + MB_OK);
+  end;
+end;
+
+procedure Gam2ToBin_Db();
+begin
+  if LoadSourceFile('gam2', 100) then begin
+     App.FileName.Text:= CurrentOpenedFile;
+
+     Gam2DataChannelsSet(TFFVersion);
+     FrameRecords:= Gam2Parser;
+     if ErrorCode = NO_ERROR then begin
+
+         BinDbConverter.Init(TFFVersion, FrameRecords);
+         BinDbConverter.CreateParameters();
+         BinDbConverter.ChannelsComposer(TffStructure.GetTFFDataChannels);
+         BinDbConverter.FramesComposer(FrameRecords);
+
+         SaveByteArray(BinDbConverter.GetBinDbData, ReplaceText(CurrentOpenedFile,ExtractFileExt(CurrentOpenedFile),'') + '.bin_db');
+         Application.MessageBox('File converted','', MB_ICONINFORMATION + MB_OK);
+
+         BinDbConverter.Done;
+
+     end
+     else Application.MessageBox(GetErrorMessage(ErrorCode),'Error', MB_ICONERROR + MB_OK);
+  end;
+end;
+
+procedure GamToBin_Db();
+begin
+  if LoadSourceFile('gam', 100) then begin
+     App.FileName.Text:= CurrentOpenedFile;
+     GamDataChannelsSet(TFFVersion);
+     FrameRecords:= GamParser;
+     if ErrorCode = NO_ERROR then begin
+
+         BinDbConverter.Init(TFFVersion, FrameRecords);
+         BinDbConverter.CreateParameters();
+         BinDbConverter.ChannelsComposer(TffStructure.GetTFFDataChannels);
+         BinDbConverter.FramesComposer(FrameRecords);
+
+         SaveByteArray(BinDbConverter.GetBinDbData, ReplaceText(CurrentOpenedFile,ExtractFileExt(CurrentOpenedFile),'') + '.bin_db');
+         Application.MessageBox('File converted','', MB_ICONINFORMATION + MB_OK);
+
+         BinDbConverter.Done;
+
+     end
+     else Application.MessageBox(GetErrorMessage(ErrorCode),'Error', MB_ICONERROR + MB_OK);
+  end;
+end;
 
 procedure TApp.ConvertFileClick(Sender: TObject);
 begin
-  if LoadSourceFile('bin', 100) then begin
-     FileName.Text:= CurrentOpenedFile;
-
-     TFFDataChannelsSet(TFFVersion);
-     FrameRecords:= BinParser;
-     BinDbConverter.Init(TFFVersion, FrameRecords);
-
-     BinDbConverter.CreateParameters();
-     BinDbConverter.AddParameter('FORMAT=PC');
-     BinDbConverter.AddParameter('TYPE=TFF');
-     BinDbConverter.AddParameter('ToolId type=SIB');
-     BinDbConverter.AddParameter('ToolId MfgCode=SIB');
-
-     BinDbConverter.ChannelsComposer(TffStructure.GetTFFDataChannels);
-
-     BinDbConverter.FramesComposer(FrameRecords);
-
-     SaveByteArray(BinDbConverter.GetBinDbData, ReplaceText(CurrentOpenedFile,'.bin','') + '.bin_db');
-     Application.MessageBox('File converted','', MB_ICONINFORMATION + MB_OK);
-
-     BinDbConverter.Done;
-  end;
+  if FileTypeList.ItemIndex = 0 then BinToBin_Db;
+  if FileTypeList.ItemIndex = 1 then Gam2ToBin_Db;
+  if FileTypeList.ItemIndex = 2 then GamToBin_Db;
 end;
 
 procedure TApp.ConvertToCSVClick(Sender: TObject);
@@ -142,7 +202,7 @@ begin
 
      CSVConverter.CSVComposer;
      try
-       CSVConverter.GetCSVData.SaveToFile(ReplaceText(CurrentOpenedFile,'.bin_db','') + '.csv');
+       CSVConverter.GetCSVData.SaveToFile(ReplaceText(CurrentOpenedFile,ExtractFileExt(CurrentOpenedFile),'') + '.csv');
        Application.MessageBox('File converted','', MB_ICONINFORMATION + MB_OK);
      except
        Application.MessageBox('Unable to save CSV file. Probably it is being used by another process','Error', MB_ICONERROR + MB_OK);
@@ -169,7 +229,7 @@ begin
      CSVConverter.SetItemLength(TxtLength.Value);
      CSVConverter.CSVComposer;
      try
-       CSVConverter.GetCSVData.SaveToFile(ReplaceText(CurrentOpenedFile,'.bin_db','') + '.txt');
+       CSVConverter.GetCSVData.SaveToFile(ReplaceText(CurrentOpenedFile,ExtractFileExt(CurrentOpenedFile),'') + '.txt');
        Application.MessageBox('File converted','', MB_ICONINFORMATION + MB_OK);
      except
        Application.MessageBox('Unable to save TXT file. Probably it is being used by another process','Error', MB_ICONERROR + MB_OK);
@@ -183,31 +243,11 @@ begin
   NumberEx.Caption:= FloatToStrF(ExampleValue, ffFixed, 10, FloatDigits.Value);
 end;
 
-procedure TApp.FormCreate(Sender: TObject);
-begin
-  TFFVersion:= TFF_V30; // By default
-  NumberEx.Caption:= FloatToStrF(ExampleValue, ffFixed, 10, FloatDigits.Value);
-end;
 
 procedure TApp.SeparatorCharChange(Sender: TObject);
 begin
   if SeparatorChar.Text = '' then SeparatorChar.Text:= ';';
 end;
-
-function SetStringLength(Str: String; n: Word): String;
-begin
-  Result:= AddCharR(' ', LeftBStr(Str, n), n);
-end;
-
-procedure TApp.TestClick(Sender: TObject);
-var s: String;
-begin
-  s:= '12345';
-  s:= SetStringLength(s, 3);
-  ShowMessage(s);
-end;
-
-
 
 procedure TApp.AddUnitsFlagChange(Sender: TObject);
 begin
@@ -272,6 +312,8 @@ end;
 procedure TApp.VersionListChange(Sender: TObject);
 begin
    TFFVersion:= VersionList.ItemIndex + 2;
+   if TFFVersion = 4 then ADVSupport.Caption:= 'Not supported by ADV'
+   else ADVSupport.Caption:= ''
 end;
 
 end.

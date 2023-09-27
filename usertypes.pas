@@ -22,6 +22,7 @@ Const
   DATA_MAX_SIZE = 4294967295;
 
   { Error codes }
+  NO_ERROR = 0;
   FILE_NOT_FOUND = 1;
   WRONG_FILE_FORMAT = 2;
   UNEXPECTED_END_OF_FILE = 3;

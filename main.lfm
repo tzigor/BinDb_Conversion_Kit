@@ -1,17 +1,17 @@
 object App: TApp
-  Left = 2127
-  Height = 620
-  Top = -689
+  Left = 2065
+  Height = 370
+  Top = -514
   Width = 589
-  Caption = 'Bin-Db Conversion Kit'
-  ClientHeight = 620
+  Caption = 'Bin-Db Conversion Kit v1.0'
+  ClientHeight = 370
   ClientWidth = 589
   OnCreate = FormCreate
   Position = poDefaultPosOnly
   LCLVersion = '2.2.4.0'
   object PageControl1: TPageControl
     Left = 0
-    Height = 620
+    Height = 370
     Top = 0
     Width = 589
     ActivePage = MainTab
@@ -20,43 +20,34 @@ object App: TApp
     TabOrder = 0
     object MainTab: TTabSheet
       Caption = 'Main'
-      ClientHeight = 592
+      ClientHeight = 342
       ClientWidth = 581
       object CloseApp: TButton
-        Left = 465
+        Left = 464
         Height = 33
-        Top = 552
+        Top = 304
         Width = 107
         Caption = 'Close'
         OnClick = CloseAppClick
         TabOrder = 0
       end
       object FileName: TEdit
-        Left = 8
+        Left = 6
         Height = 15
-        Top = 8
-        Width = 616
+        Top = 320
+        Width = 449
         BorderStyle = bsNone
         TabOrder = 1
       end
-      object Test: TButton
-        Left = 320
-        Height = 25
-        Top = 552
-        Width = 75
-        Caption = 'Test'
-        OnClick = TestClick
-        TabOrder = 2
-      end
       object CSVBox: TGroupBox
-        Left = 7
+        Left = 8
         Height = 176
         Top = 120
         Width = 565
         Caption = 'CSV Converter'
         ClientHeight = 156
         ClientWidth = 561
-        TabOrder = 3
+        TabOrder = 2
         object ConvertToCSV: TButton
           Left = 441
           Height = 33
@@ -277,7 +268,7 @@ object App: TApp
         Caption = 'Bin Db Convertor'
         ClientHeight = 85
         ClientWidth = 561
-        TabOrder = 4
+        TabOrder = 3
         object ConvertFile: TButton
           Left = 416
           Height = 33
@@ -333,21 +324,35 @@ object App: TApp
           Left = 104
           Height = 23
           Top = 3
-          Width = 160
+          Width = 189
           ItemHeight = 15
           ItemIndex = 0
           Items.Strings = (
-            'PCM + DnI - .BIN'
-            'LTB - .LTB'
+            'Power control + DnI  .BIN files'
+            'Gama journal  .GAM2 files'
+            'Gama history  .GAM files'
           )
           TabOrder = 2
-          Text = 'PCM + DnI - .BIN'
+          Text = 'Power control + DnI  .BIN files'
+        end
+        object ADVSupport: TLabel
+          Left = 10
+          Height = 15
+          Top = 66
+          Width = 119
+          Caption = 'Not supported by ADV'
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clRed
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          ParentColor = False
+          ParentFont = False
         end
       end
     end
   end
   object OpenDialog: TOpenDialog
-    Left = 16
-    Top = 576
+    Left = 120
+    Top = 272
   end
 end

@@ -72,6 +72,16 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="CSV_Converter"/>
       </Unit>
+      <Unit>
+        <Filename Value="parsegam2.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ParseGam2"/>
+      </Unit>
+      <Unit>
+        <Filename Value="parsegam.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ParseGam"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

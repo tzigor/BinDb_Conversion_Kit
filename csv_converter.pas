@@ -341,7 +341,7 @@ uses Main;
   begin
     Channels:= '';
     ChannelsCount:= 0;
-    ErrorCode:= 0;
+    ErrorCode:= NO_ERROR;
     isFirstFrame:= True;
     repeat
        RecordLength:= GetRecordLength;

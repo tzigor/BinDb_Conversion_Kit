@@ -10,7 +10,7 @@ uses
   athreads,
   {$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, Main, TffObjects, ParseBin, CSV_Converter
+  Forms, Main, TffObjects, ParseBin, CSV_Converter, ParseGam2, ParseGam
   { you can add units after this };
 
 {$R *.res}
