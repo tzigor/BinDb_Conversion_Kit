@@ -50,7 +50,6 @@ type
   String4 = String[4];
   String2 = String[2];
 
-type
   TTFFDataChannel = record
     DLIS        : String16;
     Units       : String4;

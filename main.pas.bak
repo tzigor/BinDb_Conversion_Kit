@@ -7,8 +7,7 @@ interface
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ComCtrls, StdCtrls,
   Spin, DateUtils, StrUtils, Utils, UserTypes, ParseBin, TffObjects,
-  BIN_DB_Converter, CSV_Converter, Buttons, LCLType, ParseGam2, ParseGam,
-  ParseLTB;
+  BIN_DB_Converter, CSV_Converter, Buttons, LCLType, ParseGam2, ParseGam;
 
 type
 
@@ -30,9 +29,6 @@ type
     Label3: TLabel;
     Label5: TLabel;
     ADVSupport: TLabel;
-    Indicator: TLabel;
-    SortingLabel: TLabel;
-    SortingProgress: TProgressBar;
     S100: TRadioButton;
     TxtLength: TSpinEdit;
     UnixTime: TRadioButton;
@@ -45,6 +41,7 @@ type
     Label2: TLabel;
     FloatDigits: TSpinEdit;
     CloseApp: TButton;
+    FileName: TEdit;
     OpenDialog: TOpenDialog;
     PageControl1: TPageControl;
     MainTab: TTabSheet;
@@ -97,13 +94,9 @@ implementation
 
 procedure TApp.FormCreate(Sender: TObject);
 begin
-  DecimalSeparator:= '.';
   ADVSupport.Caption:= '';
   TFFVersion:= TFF_V30; // By default
   NumberEx.Caption:= FloatToStrF(ExampleValue, ffFixed, 10, FloatDigits.Value);
-  Indicator.Caption:= '';
-  SortingProgress.Visible:= False;
-  SortingLabel.Visible:= False;
 end;
 
 procedure TApp.CloseAppClick(Sender: TObject);
@@ -111,40 +104,10 @@ begin
   App.Close;
 end;
 
-procedure SortFrameRecordsByTime;
-var
-  p, q , n: longWord;
-  index  : TDateTime;
-  vTmp: TFrameRecord;
-
-begin
-  n:= Length(FrameRecords);
-  App.SortingProgress.Max:= n;
-  App.SortingProgress.Position:= 0;
-  App.SortingProgress.Visible:= True;
-  App.SortingLabel.Visible:= True;
-  App.SortingLabel.Refresh;
-  for p := 0 to n - 1 do
-  begin
-    index:= FrameRecords[p].DateTime;
-    q:= p;
-    while (q > 0) AND (CompareDateTime(FrameRecords[q - 1].DateTime, index) > 0) do
-    begin
-       vTmp:= FrameRecords[q];
-       FrameRecords[q]:= FrameRecords[q - 1];
-       FrameRecords[q - 1]:= vTmp;
-       Dec(q);
-    end;
-    FrameRecords[q].DateTime:= index;
-    App.SortingProgress.Position:= p;
-  end;
-  App.SortingProgress.Visible:= False;
-  App.SortingLabel.Visible:= False;
-end;
-
 procedure BinToBin_Db();
 begin
   if LoadSourceFile('bin', 100) then begin
+     App.FileName.Text:= CurrentOpenedFile;
      BinDataChannelsSet(TFFVersion);
      FrameRecords:= BinParser;
      if ErrorCode = NO_ERROR then begin
@@ -155,12 +118,14 @@ begin
          BinDbConverter.AddParameter('TYPE=TFF');
          BinDbConverter.AddParameter('ToolId type=SIB');
          BinDbConverter.AddParameter('ToolId MfgCode=SIB');
-         BinDbConverter.Composer(TffStructure.GetTFFDataChannels, FrameRecords);
+         BinDbConverter.ChannelsComposer(TffStructure.GetTFFDataChannels);
+         BinDbConverter.FramesComposer(FrameRecords);
 
          SaveByteArray(BinDbConverter.GetBinDbData, ReplaceText(CurrentOpenedFile,ExtractFileExt(CurrentOpenedFile),'') + '.bin_db');
-         //Application.MessageBox('File converted','', MB_ICONINFORMATION + MB_OK);
+         Application.MessageBox('File converted','', MB_ICONINFORMATION + MB_OK);
 
          BinDbConverter.Done;
+
      end
      else Application.MessageBox(GetErrorMessage(ErrorCode),'Error', MB_ICONERROR + MB_OK);
   end;
@@ -169,17 +134,22 @@ end;
 procedure Gam2ToBin_Db();
 begin
   if LoadSourceFile('gam2', 100) then begin
+     App.FileName.Text:= CurrentOpenedFile;
+
      Gam2DataChannelsSet(TFFVersion);
      FrameRecords:= Gam2Parser;
      if ErrorCode = NO_ERROR then begin
 
          BinDbConverter.Init(TFFVersion, FrameRecords);
          BinDbConverter.CreateParameters();
-         BinDbConverter.Composer(TffStructure.GetTFFDataChannels, FrameRecords);
+         BinDbConverter.ChannelsComposer(TffStructure.GetTFFDataChannels);
+         BinDbConverter.FramesComposer(FrameRecords);
 
          SaveByteArray(BinDbConverter.GetBinDbData, ReplaceText(CurrentOpenedFile,ExtractFileExt(CurrentOpenedFile),'') + '.bin_db');
+         Application.MessageBox('File converted','', MB_ICONINFORMATION + MB_OK);
 
          BinDbConverter.Done;
+
      end
      else Application.MessageBox(GetErrorMessage(ErrorCode),'Error', MB_ICONERROR + MB_OK);
   end;
@@ -188,37 +158,21 @@ end;
 procedure GamToBin_Db();
 begin
   if LoadSourceFile('gam', 100) then begin
+     App.FileName.Text:= CurrentOpenedFile;
      GamDataChannelsSet(TFFVersion);
      FrameRecords:= GamParser;
      if ErrorCode = NO_ERROR then begin
 
          BinDbConverter.Init(TFFVersion, FrameRecords);
          BinDbConverter.CreateParameters();
-         BinDbConverter.Composer(TffStructure.GetTFFDataChannels, FrameRecords);
+         BinDbConverter.ChannelsComposer(TffStructure.GetTFFDataChannels);
+         BinDbConverter.FramesComposer(FrameRecords);
 
          SaveByteArray(BinDbConverter.GetBinDbData, ReplaceText(CurrentOpenedFile,ExtractFileExt(CurrentOpenedFile),'') + '.bin_db');
+         Application.MessageBox('File converted','', MB_ICONINFORMATION + MB_OK);
 
          BinDbConverter.Done;
-     end
-     else Application.MessageBox(GetErrorMessage(ErrorCode),'Error', MB_ICONERROR + MB_OK);
-  end;
-end;
 
-procedure LTBToBin_Db();
-begin
-  if LoadSourceFile('ltb', 100) then begin
-     LTBDataChannelsSet(TFFVersion);
-     FrameRecords:= LTBParser;
-     SortFrameRecordsByTime;
-     if ErrorCode = NO_ERROR then begin
-
-         BinDbConverter.Init(TFFVersion, FrameRecords);
-         BinDbConverter.CreateParameters();
-         BinDbConverter.Composer(TffStructure.GetTFFDataChannels, FrameRecords);
-
-         SaveByteArray(BinDbConverter.GetBinDbData, ReplaceText(CurrentOpenedFile,ExtractFileExt(CurrentOpenedFile),'') + '.bin_db');
-
-         BinDbConverter.Done;
      end
      else Application.MessageBox(GetErrorMessage(ErrorCode),'Error', MB_ICONERROR + MB_OK);
   end;
@@ -226,12 +180,9 @@ end;
 
 procedure TApp.ConvertFileClick(Sender: TObject);
 begin
-  Indicator.Caption:= '';
-  Indicator.Refresh;
   if FileTypeList.ItemIndex = 0 then BinToBin_Db;
   if FileTypeList.ItemIndex = 1 then Gam2ToBin_Db;
   if FileTypeList.ItemIndex = 2 then GamToBin_Db;
-  if FileTypeList.ItemIndex = 3 then LTBToBin_Db;
 end;
 
 procedure TApp.ConvertToCSVClick(Sender: TObject);

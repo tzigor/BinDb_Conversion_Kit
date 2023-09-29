@@ -5,7 +5,8 @@ unit Utils;
 interface
 
 uses
-  Classes, SysUtils, UserTypes, StrUtils;
+  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ComCtrls, DateUtils,
+  UserTypes, StrUtils;
 
 function LoadByteArray(const AFileName: string): TBytes;
 procedure SaveByteArray(AByteArray: TBytes; const AFileName: string);
@@ -26,6 +27,7 @@ function isEndOfFile(): Boolean;
 function SetStringLength(Str: String; n: Word): String;
 procedure IncDataOffset(n: LongWord);
 function GetErrorMessage(error: Byte): PChar;
+function ReadValidDateTime(var DateTime: TDateTime): Boolean;
 
 implementation
 Uses Main;
@@ -70,6 +72,8 @@ begin
   AStream := TFileStream.Create(AFileName, fmCreate);
   try
      AStream.WriteBuffer(Pointer(AByteArray)^, Length(AByteArray));
+     App.Indicator.Caption:= 'File converted';
+     App.Indicator.Refresh;
   finally
      AStream.Free;
   end;
@@ -89,6 +93,8 @@ begin
            EndOfFile:= False;
            Result:= True;
            CurrentOpenedFile:= App.OpenDialog.FileName;
+           App.Indicator.Caption:= 'In progress';
+           App.Indicator.Refresh;
         end;
      end;
   end;
@@ -107,6 +113,29 @@ procedure IncDataOffset(n: LongWord);
 var i: LongWord;
 begin
    for i:=1 to n do ReadCurrentByte;
+end;
+
+function ReadValidDateTime(var DateTime: TDateTime): Boolean;
+var Flag             : Boolean;
+    y, m, d, h, n, s : longInt;
+    ValidDateTime    : Boolean;
+begin
+   try
+      Flag:= TryStrToInt(IntToHex(ReadCurrentByte), y);
+      Flag:= TryStrToInt(IntToHex(ReadCurrentByte), m);
+      Flag:= TryStrToInt(IntToHex(ReadCurrentByte), d);
+      Flag:= TryStrToInt(IntToHex(ReadCurrentByte), h);
+      Flag:= TryStrToInt(IntToHex(ReadCurrentByte), n);
+      Flag:= TryStrToInt(IntToHex(ReadCurrentByte), s);
+      if flag then ValidDateTime:= IsValidDateTime(2000 + y, m, d, h, n, s, 0)
+      else ValidDateTime:= False;
+    finally
+    end;
+    if ValidDateTime And (y >= 22) And (y <= 30) then begin
+       DateTime:= EncodeDateTime(2000 + y, m, d, h, n, s, 0);
+       Result:= True;
+    end
+    else Result:= False;
 end;
 
 function isEndOfFile(): Boolean;

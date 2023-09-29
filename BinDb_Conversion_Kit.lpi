@@ -82,6 +82,11 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="ParseGam"/>
       </Unit>
+      <Unit>
+        <Filename Value="parseltb.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ParseLTB"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

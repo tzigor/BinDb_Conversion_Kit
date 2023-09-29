@@ -26,6 +26,7 @@ type
      procedure AddParameter(Param: String);
      procedure ChannelsComposer(Channels: TTFFDataChannels);
      procedure FramesComposer(FrameRecords: TFrameRecords);
+     procedure Composer(Channels: TTFFDataChannels; FrameRecords: TFrameRecords);
   end;
 
 implementation
@@ -154,6 +155,12 @@ begin
      for j:=0 to 3 do Insert(F4Array[j], BinDbData, DATA_MAX_SIZE);
      for j:=0 to FrameLen - 1 do Insert(FrameRecords[i].Data[j], BinDbData, DATA_MAX_SIZE);
   end;
+end;
+
+procedure TBinDbConverter.Composer(Channels: TTFFDataChannels; FrameRecords: TFrameRecords);
+begin
+  ChannelsComposer(Channels);
+  FramesComposer(FrameRecords);
 end;
 
 end.

@@ -10,34 +10,10 @@ uses
 
 function Gam2Parser(): TFrameRecords;
 procedure Gam2DataChannelsSet(Tff_Ver: Byte);
-function ReadValidDateTime(var DateTime: TDateTime): Boolean;
 function FindFirstValidTime(): Boolean; { Search for valid Date/Time index }
 
 implementation
 uses Main;
-
-function ReadValidDateTime(var DateTime: TDateTime): Boolean;
-var Flag             : Boolean;
-    y, m, d, h, n, s : longInt;
-    ValidDateTime    : Boolean;
-begin
-   try
-      Flag:= TryStrToInt(IntToHex(ReadCurrentByte), y);
-      Flag:= TryStrToInt(IntToHex(ReadCurrentByte), m);
-      Flag:= TryStrToInt(IntToHex(ReadCurrentByte), d);
-      Flag:= TryStrToInt(IntToHex(ReadCurrentByte), h);
-      Flag:= TryStrToInt(IntToHex(ReadCurrentByte), n);
-      Flag:= TryStrToInt(IntToHex(ReadCurrentByte), s);
-      if flag then ValidDateTime:= IsValidDateTime(2000 + y, m, d, h, n, s, 0)
-      else ValidDateTime:= False;
-    finally
-    end;
-    if ValidDateTime And (y >= 20) And (y <= 30) then begin
-       DateTime:= EncodeDateTime(2000 + y, m, d, h, n, s, 0);
-       Result:= True;
-    end
-    else Result:= False;
-end;
 
 function FindFirstValidTime(): Boolean; { Search for valid Date/Time index }
 var
@@ -114,8 +90,7 @@ begin
               TffFrames.AddData(TffStructure.GetOffsetByName('Op_time'), U4);
               IncDataOffset(4);
 
-              Move(Bytes[DataOffset], U1, 1);
-              TffFrames.AddData(TffStructure.GetOffsetByName('Blank'), U1); { Dummy param for ADV 2 }
+              TffFrames.AddData(TffStructure.GetOffsetByName('Blank'), 0); { Dummy param for ADV 2 }
           end
           else IncDataOffset(10);
        end
