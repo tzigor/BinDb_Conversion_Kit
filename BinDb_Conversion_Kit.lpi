@@ -87,6 +87,11 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="ParseLTB"/>
       </Unit>
+      <Unit>
+        <Filename Value="convertversion.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ConvertVersion"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

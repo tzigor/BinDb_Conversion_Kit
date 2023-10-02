@@ -8,7 +8,7 @@ uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ComCtrls, StdCtrls,
   Spin, DateUtils, StrUtils, Utils, UserTypes, ParseBin, TffObjects,
   BIN_DB_Converter, CSV_Converter, Buttons, LCLType, ParseGam2, ParseGam,
-  ParseLTB;
+  ParseLTB, ConvertVersion;
 
 type
 
@@ -19,15 +19,19 @@ type
     AddMeasure: TCheckBox;
     AddUnitsFlag: TCheckBox;
     AddTypeFlag: TCheckBox;
-    ConvertToTxt: TButton;
+    CloseApp: TBitBtn;
     FileTypeList: TComboBox;
+    GroupBox1: TGroupBox;
+    RawSource: TRadioButton;
+    BinDbSource: TRadioButton;
+    SortTime: TCheckBox;
+    ConvertToTxt: TButton;
     ConvertFile: TButton;
     ConvertToCSV: TButton;
     CSVBox: TGroupBox;
     BinDbBox: TGroupBox;
     HumanTime: TRadioButton;
     Label1: TLabel;
-    Label3: TLabel;
     Label5: TLabel;
     ADVSupport: TLabel;
     Indicator: TLabel;
@@ -44,7 +48,6 @@ type
     SeparatorChar: TEdit;
     Label2: TLabel;
     FloatDigits: TSpinEdit;
-    CloseApp: TButton;
     OpenDialog: TOpenDialog;
     PageControl1: TPageControl;
     MainTab: TTabSheet;
@@ -57,6 +60,7 @@ type
     procedure ConvertFileClick(Sender: TObject);
     procedure ConvertToCSVClick(Sender: TObject);
     procedure ConvertToTxtClick(Sender: TObject);
+    procedure FileTypeListClick(Sender: TObject);
     procedure FloatDigitsChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure HumanTimeChange(Sender: TObject);
@@ -147,6 +151,7 @@ begin
   if LoadSourceFile('bin', 100) then begin
      BinDataChannelsSet(TFFVersion);
      FrameRecords:= BinParser;
+     if App.SortTime.Checked then SortFrameRecordsByTime;
      if ErrorCode = NO_ERROR then begin
 
          BinDbConverter.Init(TFFVersion, FrameRecords);
@@ -171,6 +176,7 @@ begin
   if LoadSourceFile('gam2', 100) then begin
      Gam2DataChannelsSet(TFFVersion);
      FrameRecords:= Gam2Parser;
+     if App.SortTime.Checked then SortFrameRecordsByTime;
      if ErrorCode = NO_ERROR then begin
 
          BinDbConverter.Init(TFFVersion, FrameRecords);
@@ -190,6 +196,7 @@ begin
   if LoadSourceFile('gam', 100) then begin
      GamDataChannelsSet(TFFVersion);
      FrameRecords:= GamParser;
+     if App.SortTime.Checked then SortFrameRecordsByTime;
      if ErrorCode = NO_ERROR then begin
 
          BinDbConverter.Init(TFFVersion, FrameRecords);
@@ -228,10 +235,13 @@ procedure TApp.ConvertFileClick(Sender: TObject);
 begin
   Indicator.Caption:= '';
   Indicator.Refresh;
-  if FileTypeList.ItemIndex = 0 then BinToBin_Db;
-  if FileTypeList.ItemIndex = 1 then Gam2ToBin_Db;
-  if FileTypeList.ItemIndex = 2 then GamToBin_Db;
-  if FileTypeList.ItemIndex = 3 then LTBToBin_Db;
+  if RawSource.Checked then begin
+     if FileTypeList.ItemIndex = 0 then BinToBin_Db;
+     if FileTypeList.ItemIndex = 1 then Gam2ToBin_Db;
+     if FileTypeList.ItemIndex = 2 then GamToBin_Db;
+     if FileTypeList.ItemIndex = 3 then LTBToBin_Db;
+  end
+  else ConvertBinDbVersion;
 end;
 
 procedure TApp.ConvertToCSVClick(Sender: TObject);
@@ -285,6 +295,11 @@ begin
      end;
      CSVConverter.Done;
   end;
+end;
+
+procedure TApp.FileTypeListClick(Sender: TObject);
+begin
+  RawSource.Checked:= True;
 end;
 
 procedure TApp.FloatDigitsChange(Sender: TObject);
