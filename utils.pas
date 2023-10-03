@@ -45,7 +45,7 @@ end;
 function LoadByteArray(const AFileName: string): TBytes;
 var
   AStream: TStream;
-  ADataLeft: Integer;
+  ADataLeft: LongWord;
 begin
   SetLength(result, 0);
   AStream:= TFileStream.Create(AFileName, fmOpenRead or fmShareDenyWrite);
@@ -85,11 +85,13 @@ begin
   App.OpenDialog.Filter:= 'bin files|*.' + FileExt + '|all files|*.*|';
   App.OpenDialog.DefaultExt:= '.' + FileExt;
   if App.OpenDialog.Execute then begin
+     App.Indicator.Caption:= 'Loading file';
+     App.Indicator.Refresh;
      Bytes:= LoadByteArray(App.OpenDialog.FileName);
-     if Bytes <> Null then begin
-        currentFileSize:= length(Bytes);
+     if Bytes <> Nil then begin
+        CurrentFileSize:= Length(Bytes);
         DataOffset:= 0;
-        if currentFileSize >= MinFileSize then begin
+        if CurrentFileSize >= MinFileSize then begin
            EndOfFile:= False;
            Result:= True;
            CurrentOpenedFile:= App.OpenDialog.FileName;

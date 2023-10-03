@@ -7,8 +7,8 @@ interface
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ComCtrls, StdCtrls,
   Spin, DateUtils, StrUtils, Utils, UserTypes, ParseBin, TffObjects,
-  BIN_DB_Converter, CSV_Converter, Buttons, LCLType, ParseGam2, ParseGam,
-  ParseLTB, ConvertVersion;
+  BIN_DB_Converter, CSV_Converter, Buttons, LCLType, ExtCtrls, ParseGam2,
+  ParseGam, ParseLTB, ConvertVersion;
 
 type
 
@@ -19,11 +19,14 @@ type
     AddMeasure: TCheckBox;
     AddUnitsFlag: TCheckBox;
     AddTypeFlag: TCheckBox;
+    RecordRateL: TLabel;
+    millisecL: TLabel;
     CloseApp: TBitBtn;
     FileTypeList: TComboBox;
     GroupBox1: TGroupBox;
     RawSource: TRadioButton;
     BinDbSource: TRadioButton;
+    RecordRate: TSpinEdit;
     SortTime: TCheckBox;
     ConvertToTxt: TButton;
     ConvertFile: TButton;
@@ -56,6 +59,7 @@ type
     procedure AddParametersChange(Sender: TObject);
     procedure AddTypeFlagChange(Sender: TObject);
     procedure AddUnitsFlagChange(Sender: TObject);
+    procedure BinDbSourceChange(Sender: TObject);
     procedure CloseAppClick(Sender: TObject);
     procedure ConvertFileClick(Sender: TObject);
     procedure ConvertToCSVClick(Sender: TObject);
@@ -64,6 +68,7 @@ type
     procedure FloatDigitsChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure HumanTimeChange(Sender: TObject);
+    procedure RawSourceChange(Sender: TObject);
     procedure S100Change(Sender: TObject);
     procedure SeparatorCharChange(Sender: TObject);
     procedure UnixTimeChange(Sender: TObject);
@@ -93,6 +98,8 @@ var
   BinDbConverter     : TBinDbConverter;
   CSVConverter       : TCSVConverter;
 
+  ShowIndicator      : Boolean;
+
 implementation
 
 {$R *.lfm}
@@ -108,6 +115,7 @@ begin
   Indicator.Caption:= '';
   SortingProgress.Visible:= False;
   SortingLabel.Visible:= False;
+  ShowIndicator:= True;
 end;
 
 procedure TApp.CloseAppClick(Sender: TObject);
@@ -262,7 +270,7 @@ begin
      CSVConverter.CSVComposer;
      try
        CSVConverter.GetCSVData.SaveToFile(ReplaceText(CurrentOpenedFile,ExtractFileExt(CurrentOpenedFile),'') + '.csv');
-       Application.MessageBox('File converted','', MB_ICONINFORMATION + MB_OK);
+       App.Indicator.Caption:= 'File converted';
      except
        Application.MessageBox('Unable to save CSV file. Probably it is being used by another process','Error', MB_ICONERROR + MB_OK);
      end;
@@ -288,8 +296,8 @@ begin
      CSVConverter.SetItemLength(TxtLength.Value);
      CSVConverter.CSVComposer;
      try
-       CSVConverter.GetCSVData.SaveToFile(ReplaceText(CurrentOpenedFile,ExtractFileExt(CurrentOpenedFile),'') + '.txt');
-       Application.MessageBox('File converted','', MB_ICONINFORMATION + MB_OK);
+       CSVConverter.GetCSVData.SaveToFile(ReplaceText(CurrentOpenedFile, ExtractFileExt(CurrentOpenedFile), '') + '.txt');
+       App.Indicator.Caption:= 'File converted';
      except
        Application.MessageBox('Unable to save TXT file. Probably it is being used by another process','Error', MB_ICONERROR + MB_OK);
      end;
@@ -365,6 +373,20 @@ begin
   if HumanTime.Checked then
     CSVConverter.SetDateTimeType(1);
   TimeEx.Caption:= '12/31/2023 23:55:35';
+end;
+
+procedure TApp.BinDbSourceChange(Sender: TObject);
+begin
+  RecordRateL.Visible:= True;
+  millisecL.Visible:= True;
+  RecordRate.Visible:= True;
+end;
+
+procedure TApp.RawSourceChange(Sender: TObject);
+begin
+  RecordRateL.Visible:= False;
+  millisecL.Visible:= False;
+  RecordRate.Visible:= False;
 end;
 
 procedure TApp.S100Change(Sender: TObject);

@@ -1,18 +1,18 @@
 object App: TApp
-  Left = 2452
-  Height = 389
-  Top = -709
+  Left = 2140
+  Height = 422
+  Top = -714
   Width = 589
   BorderStyle = bsSingle
-  Caption = 'Bin-Db Conversion Kit v1.0.1 Portable'
-  ClientHeight = 389
+  Caption = 'Bin-Db Conversion Kit v1.1.0 Portable'
+  ClientHeight = 422
   ClientWidth = 589
   OnCreate = FormCreate
   Position = poDefaultPosOnly
   LCLVersion = '2.2.4.0'
   object PageControl1: TPageControl
     Left = 0
-    Height = 389
+    Height = 422
     Top = 0
     Width = 589
     ActivePage = MainTab
@@ -21,12 +21,12 @@ object App: TApp
     TabOrder = 0
     object MainTab: TTabSheet
       Caption = 'Main'
-      ClientHeight = 361
+      ClientHeight = 394
       ClientWidth = 581
       object CSVBox: TGroupBox
         Left = 8
         Height = 176
-        Top = 136
+        Top = 168
         Width = 565
         Caption = 'CSV Converter'
         ClientHeight = 156
@@ -173,8 +173,8 @@ object App: TApp
           Left = 16
           Height = 15
           Top = 24
-          Width = 39
-          Caption = 'TimeEx'
+          Width = 113
+          Caption = '12/31/2023 23:55:35'
           Font.CharSet = ANSI_CHARSET
           Font.Color = clMaroon
           Font.Name = 'Segoe UI Semibold'
@@ -246,17 +246,17 @@ object App: TApp
       end
       object BinDbBox: TGroupBox
         Left = 8
-        Height = 121
+        Height = 152
         Top = 8
         Width = 565
         Caption = 'Bin Db Convertor'
-        ClientHeight = 101
+        ClientHeight = 132
         ClientWidth = 561
         TabOrder = 1
         object ConvertFile: TButton
           Left = 417
           Height = 33
-          Top = 56
+          Top = 88
           Width = 136
           Caption = 'Convert to Bin-Db'
           OnClick = ConvertFileClick
@@ -352,6 +352,7 @@ object App: TApp
             Width = 23
             Caption = ' '
             Checked = True
+            OnChange = RawSourceChange
             TabOrder = 2
             TabStop = True
           end
@@ -361,21 +362,58 @@ object App: TApp
             Top = 40
             Width = 68
             Caption = '   BIN-DB'
+            OnChange = BinDbSourceChange
             TabOrder = 1
           end
+        end
+        object RecordRateL: TLabel
+          Left = 8
+          Height = 15
+          Top = 100
+          Width = 63
+          Caption = 'Record rate:'
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clNavy
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          ParentColor = False
+          ParentFont = False
+          Visible = False
+        end
+        object RecordRate: TSpinEdit
+          Left = 78
+          Height = 23
+          Top = 96
+          Width = 88
+          TabOrder = 4
+          Visible = False
+        end
+        object millisecL: TLabel
+          Left = 174
+          Height = 15
+          Top = 100
+          Width = 40
+          Caption = 'millisec'
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clNavy
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          ParentColor = False
+          ParentFont = False
+          Visible = False
         end
       end
       object SortingProgress: TProgressBar
         Left = 56
         Height = 16
-        Top = 335
+        Top = 371
         Width = 404
         TabOrder = 2
       end
       object SortingLabel: TLabel
         Left = 8
         Height = 17
-        Top = 332
+        Top = 368
         Width = 42
         Caption = 'Sorting'
         Font.CharSet = ANSI_CHARSET
@@ -389,7 +427,7 @@ object App: TApp
       object Indicator: TLabel
         Left = 224
         Height = 25
-        Top = 308
+        Top = 344
         Width = 94
         Caption = 'In progress'
         Font.CharSet = ANSI_CHARSET
@@ -403,7 +441,7 @@ object App: TApp
       object CloseApp: TBitBtn
         Left = 472
         Height = 33
-        Top = 320
+        Top = 356
         Width = 101
         Caption = 'Close'
         Font.CharSet = ANSI_CHARSET
@@ -418,7 +456,7 @@ object App: TApp
     end
   end
   object OpenDialog: TOpenDialog
-    Left = 120
-    Top = 272
+    Left = 144
+    Top = 320
   end
 end

@@ -27,24 +27,14 @@ TFrame = array of String;
 
 var
   OutBytes: array of Byte;
-  Counter, OutCounter: longWord;
-  Data: array of Byte;
+  OutCounter: longWord;
   DataChannels: array of TDataChannel;
-
-  procedure GetData(Len: longWord);
-  var i: longWord;
-  begin
-    setLength(Data, Len);
-    for i:= 1 to Len do begin
-       Data[i-1]:= Bytes[Counter];
-       Counter:= Counter + 1;
-    end;
-  end;
 
   function ParseDataChannel(RecordLength: longWord): TDataChannel;
   var DataChannel: TDataChannel;
-      i, DLISNameLen, UnitsLen, RepCodeLen, SamplesLen, AbsentValueLen, Shift: Byte;
+      i, DLISNameLen, UnitsLen, RepCodeLen, SamplesLen, AbsentValueLen: Byte;
       StrSamples: String;
+      b: Byte;
   begin
     DLISNameLen:= 10;
     UnitsLen:= 4;
@@ -60,21 +50,35 @@ var
        RepCode:= '';
        StrSamples:= '';
        AbsentValue:= '';
-       Shift:= 0;
-       for i:= 0 to DLISNameLen - 1 do if Data[i] > 0 then DLISName:= DLISName + Chr(Data[i])
-                         else DLISName:= DLISName + ' ';
-       Shift:= Shift + DLISNameLen;
-       for i:= 0 to UnitsLen - 1 do if Data[i+Shift] > 0 then Units:= Units + Chr(Data[i+Shift])
-                         else Units:= Units + ' ';
-       Shift:= Shift + UnitsLen;
-       for i:= 0 to RepCodeLen - 1 do if Data[i+Shift] > 0 then RepCode:= RepCode + Chr(Data[i+Shift])
-                         else RepCode:= RepCode + ' ';
-       Shift:= Shift + RepCodeLen;
-       for i:= 0 to SamplesLen - 1 do if Data[i+Shift] > 0 then StrSamples:= StrSamples + Chr(Data[i+Shift]);
+       for i:= 0 to DLISNameLen - 1 do begin
+          b:= ReadCurrentByte;
+          if b > 0 then DLISName:= DLISName + Chr(b)
+          else DLISName:= DLISName + ' ';
+       end;
+
+       for i:= 0 to UnitsLen - 1 do begin
+          b:= ReadCurrentByte;
+          if b > 0 then Units:= Units + Chr(b)
+          else Units:= Units + ' ';
+       end;
+
+       for i:= 0 to RepCodeLen - 1 do begin
+          b:= ReadCurrentByte;
+          if b > 0 then RepCode:= RepCode + Chr(b)
+          else RepCode:= RepCode + ' ';
+       end;
+
+       for i:= 0 to SamplesLen - 1 do begin
+          b:= ReadCurrentByte;
+          if b > 0 then StrSamples:= StrSamples + Chr(b);
+        end;
        TryStrToInt(Trim(StrSamples), Samples);
-       Shift:= Shift + SamplesLen;
-       for i:= 0 to AbsentValueLen - 1 do if Data[i+Shift] > 0 then AbsentValue:= AbsentValue + Chr(Data[i+Shift])
-                          else AbsentValue:= AbsentValue + ' ';
+
+       for i:= 0 to AbsentValueLen - 1 do begin
+          b:= ReadCurrentByte;
+          if b > 0 then AbsentValue:= AbsentValue + Chr(b)
+          else AbsentValue:= AbsentValue + ' ';
+       end;
     end;
     Result:= DataChannel;
   end;
@@ -134,102 +138,103 @@ var
              OutBytes[OutCounter]:= Ord(wDLISName[i]);
           end
           else OutBytes[OutCounter]:= 0;
-          OutCounter:= OutCounter + 1;
+          Inc(OutCounter);
        end;
        for i:= 1 to UnitsLen do begin
           if (sUnitsLen >= i) And (wUnits <> '') then OutBytes[OutCounter]:= Ord(wUnits[i])
           else OutBytes[OutCounter]:= 0;
-          OutCounter:= OutCounter + 1;
+          Inc(OutCounter);
        end;
        for i:= 1 to RepCodeLen do begin
           if (sRepCodeLen >= i) And (wRepCode <> '') then OutBytes[OutCounter]:= Ord(wRepCode[i])
           else OutBytes[OutCounter]:= 0;
-          OutCounter:= OutCounter + 1;
+          Inc(OutCounter);
        end;
        for i:= 1 to SamplesLen do begin
           if (sSamplesLen >= i) And (wSamples <> '') then OutBytes[OutCounter]:= Ord(wSamples[i])
           else OutBytes[OutCounter]:= 0;
-          OutCounter:= OutCounter + 1;
+          Inc(OutCounter);
        end;
        for i:= 1 to AbsentValueLen do begin
           if (sAbsentValueLen >= i) And (wAbsentValue <> '') then OutBytes[OutCounter]:= Ord(wAbsentValue[i])
           else OutBytes[OutCounter]:= 0;
-          OutCounter:= OutCounter + 1;
+          Inc(OutCounter);
        end;
     end;
-  end;
-
-  function DataChannelToStr(DataChannel: TDataChannel): String;
-  var wStr: String;
-  begin
-    wStr:= '';
-    with DataChannel do
-       wStr:= wStr + DLISName + ' ' + Units + ' ' + RepCode + ' ' + IntToStr(Samples) + ' ' + AbsentValue + NewLine;
-    Result:= wStr;
-  end;
-
-  function DataToStr(): String;
-  var len, i: Word;
-      wStr: String;
-  begin
-    wStr:= '';
-    len:= length(Data);
-    for i:=1 to len do
-      if Data[i-1] > 0 then wStr:= wStr + Chr(Data[i-1]);
-    Result:= wStr;
   end;
 
   procedure CopyRecord(RecType: Char; RecordLength: Word);
   var i, StartIndex: Word;
   begin
     OutBytes[OutCounter]:= (RecordLength + 1) And $00FF;
-    OutCounter:= OutCounter + 1;
+    Inc(OutCounter);
     OutBytes[OutCounter]:= (RecordLength + 1) >> 8;
-    OutCounter:= OutCounter + 1;
+    Inc(OutCounter);
     OutBytes[OutCounter]:= Ord(RecType);
-    OutCounter:= OutCounter + 1;
+    Inc(OutCounter);
     StartIndex:= 0;
 
     for i:=StartIndex to RecordLength - 1 do begin
-      OutBytes[OutCounter]:= Data[i];
-      OutCounter:= OutCounter + 1;
+      OutBytes[OutCounter]:= ReadCurrentByte;
+      Inc(OutCounter);
     end;
   end;
 
+  function GetDateTimeMillis(): longWord;  { Milli seconds }
+  var F4: Single;
+      Data: array[0..3] of Byte;
+  begin
+    Data[0]:= ReadCurrentByte;
+    Data[1]:= ReadCurrentByte;
+    Data[2]:= ReadCurrentByte;
+    Data[3]:= ReadCurrentByte;
+    Move(Data[0], F4, 4);
+    Result:= Round(F4 * 100000 );
+    Dec(DataOffset, 4);
+  end;
+
   procedure ConvertBinDbVersion();
-  var fileLen: longWord;
-      RecordLength: Word;
+  var RecordLength: Word;
       RecordType: Char;
       FileCheck: String4;
+      Milliseconds: LongWord;
+      PrevMilliseconds: LongWord;
+      Diff, RecordRateValue: LongWord;
   begin
     if LoadSourceFile('bin_db', 100) then begin
+       EndOfFile:= False;
+       ErrorCode:= NO_ERROR;
+       PrevMilliseconds:= 0;
        setLength(DataChannels, 0);
-       fileLen:= length(Bytes);
-       if fileLen > 1000 then FileCheck:= Chr(Bytes[2]) + Chr(Bytes[3]) + Chr(Bytes[4]) + Chr(Bytes[5]);
+       RecordRateValue:= App.RecordRate.Value;
+       if CurrentFileSize > 1000 then FileCheck:= Chr(Bytes[2]) + Chr(Bytes[3]) + Chr(Bytes[4]) + Chr(Bytes[5]);
        if FileCheck = 'PFFV' then begin
          Bytes[8]:= Ord(IntToStr(TFFVersion)[1]);
-         SetLength(OutBytes, fileLen);
-         Counter:= 0;
+         SetLength(OutBytes, CurrentFileSize);
+         DataOffset:= 0;
          OutCounter:= 0;
          repeat
-            RecordLength:= Bytes[Counter];
-            Counter:= Counter + 1;
-            RecordLength:= (RecordLength or (Bytes[Counter] shl 8)) - 1;
-            Counter:= Counter + 1;
-            RecordType:= Chr(Bytes[Counter]);
-            Counter:= Counter + 1;
-            GetData(RecordLength);
-            if RecordType = 'P' then begin
-               CopyRecord('P', RecordLength);
-            end
+            RecordLength:= ReadCurrentByte;
+            RecordLength:= (RecordLength or (ReadCurrentByte shl 8)) - 1;
+            RecordType:= Chr(ReadCurrentByte);
+            if RecordType = 'P' then CopyRecord('P', RecordLength)
             else if RecordType = 'M' then CopyRecord('M', RecordLength)
-                 else if RecordType = 'F' then CopyRecord('F', RecordLength)
+                 else if RecordType = 'F' then begin
+                          Milliseconds:= GetDateTimeMillis;
+                          Diff:= Milliseconds - PrevMilliseconds + 10;
+                          if Diff >= RecordRateValue then begin
+                             CopyRecord('F', RecordLength);
+                             PrevMilliseconds:= Milliseconds;
+                          end
+                          else
+                            Inc(DataOffset, RecordLength);
+                      end
                       else if RecordType = 'B' then
                       CopyRecord('B', RecordLength)
                            else if RecordType = 'D' then begin
                                    ComposeDataChannel(ParseDataChannel(RecordLength));
                                 end;
-         until Counter >= fileLen;
+         until EndOfFile Or (ErrorCode > 0);
          SetLength(OutBytes, OutCounter);
          SaveByteArray(OutBytes, ReplaceText(CurrentOpenedFile, ExtractFileExt(CurrentOpenedFile),'') + '_converted.bin_db');
        end

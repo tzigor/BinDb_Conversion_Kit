@@ -34,7 +34,7 @@ type
   TCSVConverter = object
   private
      CSVSeparator    : String;
-     Data            : TBytes;
+     RecordLength    : LongWord;
      ParamChannels   : TStringList;
      Measurements    : TStringList;
      CSVData         : TStringList;
@@ -55,13 +55,12 @@ type
      procedure SetDateTimeType(Value: Byte);
      procedure SetItemLength(Value: Byte);
      function GetCSVData(): TStringList;
-     function GetRecordLength(): LongWord;
-     procedure GetData(Size: LongWord);
+     procedure GetRecordLength();
      function DataToStr(): String;
      procedure FindStartDate(Parameter: String);
      function ParseMeasurement(): TMeasurement;
      function MeasurementToStr(Measurement: TMeasurement): String;
-     function ParseDataChannel(RecordLength: longWord): TDataChannel;
+     function ParseDataChannel(RecordLen: longWord): TDataChannel;
      function ParseFrame(ChannelsList: TDataChannels): String;
      procedure CSVComposer();
   end;
@@ -140,13 +139,15 @@ uses Main;
   end;
 
   function TCSVConverter.DataToStr(): String;
-  var len, i: Word;
-      wStr: String;
+  var len, i : Word;
+      wStr   : String;
+      b      : Byte;
   begin
     wStr:= '';
-    len:= length(Data);
-    for i:=1 to len do
-      if Data[i-1] > 0 then wStr:= wStr + Chr(Data[i-1]);
+    for i:=1 to RecordLength do begin
+       b:= ReadCurrentByte;
+       if b > 0 then wStr:= wStr + Chr(b);
+    end;
     Result:= wStr;
   end;
 
@@ -163,30 +164,23 @@ uses Main;
      end;
   end;
 
-  function TCSVConverter.GetRecordLength(): LongWord;
-  var RecordLength : LongWord;
+  procedure TCSVConverter.GetRecordLength();
+  var RecordLen : LongWord;
       RecordType   : Char;
   begin
-    RecordLength:= ReadCurrentByte;
-    RecordLength:= (RecordLength or (ReadCurrentByte << 8)) - 1;
+    RecordLen:= ReadCurrentByte;
+    RecordLen:= (RecordLen or (ReadCurrentByte << 8)) - 1;
     RecordType:= Chr(ReadCurrentByte);
     if RecordType = 'L' then begin
-        RecordLength:= RecordLength or (ReadCurrentByte << 16);
-        RecordLength:= (RecordLength or (ReadCurrentByte << 24)) - 1;
+        RecordLen:= RecordLen or (ReadCurrentByte << 16);
+        RecordLen:= (RecordLen or (ReadCurrentByte << 24)) - 1;
     end;
     Dec(DataOffset);
-    Result:= RecordLength;
-  end;
-
-  procedure TCSVConverter.GetData(Size: LongWord);
-  var i: longWord;
-  begin
-    setLength(Data, Size);
-    for i:= 0 to Size - 1 do Data[i]:= ReadCurrentByte;
+    RecordLength:= RecordLen;
   end;
 
   function TCSVConverter.ParseMeasurement(): TMeasurement;
-  var i, n: Byte;
+  var i, n, b: Byte;
       Measurement: TMeasurement;
   begin
     with Measurement do begin
@@ -195,18 +189,39 @@ uses Main;
        Phase:= '';
        MeasurementType:= '';
 
-       for i:=0 to 15 do if Data[i] > 0 then ChannelName:= ChannelName + Chr(Data[i]);
-       for i:=0 to 15 do if Data[i+16] > 0 then Sensor:= Sensor + Chr(Data[i+16]);
-       for i:=0 to 15 do if Data[i+32] > 0 then Phase:= Phase + Chr(Data[i+32]);
-       for i:=0 to 31 do if Data[i+48] > 0 then MeasurementType:= MeasurementType + Chr(Data[i+48]);
-       for i:=0 to 39 do if Data[i+80] > 0 then MeasurementDescription:= MeasurementDescription + Chr(Data[i+80]);
+       for i:=0 to 15 do begin
+          b:= ReadCurrentByte;
+          if b > 0 then ChannelName:= ChannelName + Chr(b);
+       end;
+       for i:=0 to 15 do begin
+          b:= ReadCurrentByte;
+          if b > 0 then Sensor:= Sensor + Chr(b);
+       end;
+       for i:=0 to 15 do begin
+          b:= ReadCurrentByte;
+          if b > 0 then Phase:= Phase + Chr(b);
+       end;
+       for i:=0 to 31 do begin
+          b:= ReadCurrentByte;
+          if b > 0 then MeasurementType:= MeasurementType + Chr(b);
+       end;
+       for i:=0 to 39 do begin
+          b:= ReadCurrentByte;
+          if b > 0 then MeasurementDescription:= MeasurementDescription + Chr(b);
+       end;
 
-       Move(Data[120], MeasurementValue, 4);
-       Move(Data[124], MeasurementTime, 4);
-       Move(Data[128], Reference, 4);
-       Move(Data[132], ReferenceLowTolerance, 4);
-       Move(Data[136], ReferenceHighTolerance, 4);
-       Move(Data[141], Limit, 4);
+       Move(Bytes[DataOffset], MeasurementValue, 4);
+       Inc(DataOffset, 4);
+       Move(Bytes[DataOffset], MeasurementTime, 4);
+       Inc(DataOffset, 4);
+       Move(Bytes[DataOffset], Reference, 4);
+       Inc(DataOffset, 4);
+       Move(Bytes[DataOffset], ReferenceLowTolerance, 4);
+       Inc(DataOffset, 4);
+       Move(Bytes[DataOffset], ReferenceHighTolerance, 4);
+       Inc(DataOffset, 4);
+       Move(Bytes[DataOffset], Limit, 4);
+       Inc(DataOffset, 4);
     end;
     Result:= Measurement;
   end;
@@ -228,9 +243,10 @@ uses Main;
     Result:= wStr;
   end;
 
-  function TCSVConverter.ParseDataChannel(RecordLength: longWord): TDataChannel;
-  var DataChannel: TDataChannel;
-    i, DLISNameLen, UnitsLen, RepCodeLen, Shift: Byte;
+  function TCSVConverter.ParseDataChannel(RecordLen: longWord): TDataChannel;
+  var DataChannel                       : TDataChannel;
+      DLISNameLen, UnitsLen, RepCodeLen : Byte;
+      i, b                              : Byte;
   begin
     DLISNameLen:= 10;
     UnitsLen:= 4;
@@ -240,13 +256,22 @@ uses Main;
        DLISName:= '';
        Units:= '';
        RepCode:= '';
-       Shift:= 0;
-       for i:= 0 to DLISNameLen - 1 do if Data[i] > 0 then DLISName:= DLISName + Chr(Data[i]);
-       Shift:= Shift + DLISNameLen;
-       for i:= 0 to UnitsLen - 1 do if Data[i+Shift] > 0 then Units:= Units + Chr(Data[i+Shift]);
-       Shift:= Shift + UnitsLen;
-       for i:= 0 to RepCodeLen - 1 do if Data[i+Shift] > 0 then RepCode:= RepCode + Chr(Data[i+Shift]);
+       for i:= 0 to DLISNameLen - 1 do begin
+          b:= ReadCurrentByte;
+          if b > 0 then DLISName:= DLISName + Chr(b);
+       end;
+       for i:= 0 to UnitsLen - 1 do begin
+          b:= ReadCurrentByte;
+          if b > 0 then Units:= Units + Chr(b);
+       end;
+       for i:= 0 to RepCodeLen - 1 do begin
+          b:= ReadCurrentByte;
+          if b > 0 then RepCode:= RepCode + Chr(b);
+       end;
     end;
+    { Increase offset for Samples & Absent Value data }
+    if RecordLength < 42 then IncDataOffset(24) { TFF V2.0 }
+    else IncDataOffset(30);                     { TFF V3.0 or V4.0 }
     Result:= DataChannel;
   end;
 
@@ -272,54 +297,52 @@ uses Main;
         FrameStr:= '';
         case ChannelsList[i].RepCode of
           'F4': begin
-                  Move(Data[DataCount], F4, 4);
+                  Move(Bytes[DataOffset], F4, 4);
                   if i = 0 then begin  { if TIME channel }
                      if DateTimeType = 1 then FrameStr:= DateTimeToStr(IncMilliSecond(StartDate, Round(F4 * 100000 )))
                      else if DateTimeType = 2 then FrameStr:= IntToStr(DateTimeToUnix(IncMilliSecond(StartDate, Round(F4 * 100000 ))))
                           else FrameStr:= FloatToStrF(F4, ffFixed, 10, App.FloatDigits.Value);
                   end
                   else FrameStr:= FloatToStrF(F4, ffFixed, 10, App.FloatDigits.Value);
-                  Inc(DataCount, 4);
+                  IncDataOffset(4);
                 end;
           'F8': begin
-                  Move(Data[DataCount], F8, 8);
+                  Move(Bytes[DataOffset], F8, 8);
                   FrameStr:= FloatToStrF(F8, ffFixed, 10, App.FloatDigits.Value);
-                  Inc(DataCount, 8);
+                  IncDataOffset(8);
                 end;
           'I1': begin
-                  I1:= Data[DataCount];
+                  I1:= ReadCurrentByte;
                   FrameStr:= IntToStr(I1);
-                  Inc(DataCount);
                 end;
           'U1': begin
-                  U1:= Data[DataCount];
+                  U1:= ReadCurrentByte;
                   FrameStr:= IntToStr(U1);
-                  Inc(DataCount);
                 end;
           'I2': begin
-                   Move(Data[DataCount], I2, 2);
+                   Move(Bytes[DataOffset], I2, 2);
                    FrameStr:= IntToStr(I2);
-                   Inc(DataCount, 2);
+                   IncDataOffset(2);
                 end;
           'U2': begin
-                   Move(Data[DataCount], U2, 2);
+                   Move(Bytes[DataOffset], U2, 2);
                    FrameStr:= IntToStr(U2);
-                   Inc(DataCount, 2);
+                   IncDataOffset(2);
                 end;
           'U4': begin
-                   Move(Data[DataCount], U4, 2);
+                   Move(Bytes[DataOffset], U4, 4);
                    FrameStr:= IntToStr(U4);
-                   Inc(DataCount, 4);
+                   IncDataOffset(4);
                 end;
           'I4': begin
-                   Move(Data[DataCount], I4, 2);
+                   Move(Bytes[DataOffset], I4, 4);
                    FrameStr:= IntToStr(I4);
-                   Inc(DataCount, 4);
+                   IncDataOffset(4);
                 end;
           'U8': begin
-                   Move(Data[DataCount], U8, 8);
+                   Move(Bytes[DataOffset], U8, 8);
                    FrameStr:= IntToStr(U8);
-                   Inc(DataCount, 8);
+                   IncDataOffset(4);
                 end
         end;
         if CSVSeparator <> '' then Frame:= Frame + FrameStr + CSVSeparator
@@ -330,7 +353,7 @@ uses Main;
   end;
 
   procedure TCSVConverter.CSVComposer();
-  var RecordLength   : LongWord;
+  var
       RecordType     : Char;
       isFirstFrame   : Boolean;
       Channels       : String;
@@ -344,14 +367,13 @@ uses Main;
     ErrorCode:= NO_ERROR;
     isFirstFrame:= True;
     repeat
-       RecordLength:= GetRecordLength;
+       GetRecordLength;
        RecordType:= Chr(ReadCurrentByte);
-       GetData(RecordLength);
        case RecordType of
           'P': begin
                   NewParameter:= DataToStr;
                   ParamChannels.Add(NewParameter);
-                  FindStartDate(NewParameter); // Try to find Start Aquisition Date
+                  FindStartDate(NewParameter); { Try to find Start Aquisition Date }
                end;
           'M': Measurements.Add(MeasurementToStr(ParseMeasurement));
           'D': begin
@@ -361,7 +383,7 @@ uses Main;
                   if AddType then CurrentChannel:= CurrentChannel + '(' + DataChannels[ChannelsCount].RepCode + ')';
 
                   if CSVSeparator <> '' then Channels:= Channels + CurrentChannel + CSVSeparator
-                  else if ChannelsCount = 0 then Channels:= Channels + SetStringLength(CurrentChannel, 20) { convert to TXT} { ChannelsCount=0 mean TIME }
+                  else if ChannelsCount = 0 then Channels:= Channels + SetStringLength(CurrentChannel, 20) { convert to TXT } { ChannelsCount=0 mean TIME }
                        else Channels:= Channels + SetStringLength(CurrentChannel, ItemLength);
 
                   Inc(ChannelsCount);
@@ -371,10 +393,12 @@ uses Main;
                   isFirstFrame:= False;
                   CSVData.Add(ParseFrame(DataChannels));
                end;
-          'B':;
+          //'B': IncDataOffset(RecordLength);
+          'B': Inc(DataOffset, RecordLength);
        else ErrorCode:= WRONG_FILE_FORMAT;
        end;
     until EndOfFile Or (ErrorCode > 0);
+    Channels:= '';
   end;
 
 end.
