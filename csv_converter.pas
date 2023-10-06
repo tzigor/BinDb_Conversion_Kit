@@ -24,9 +24,10 @@ type
   end;
 
   TDataChannel = record
-    DLISName: String16;
-    Units: String4;
-    RepCode: String2;
+    DLISName : String16;
+    Units    : String4;
+    RepCode  : String2;
+    Samples  : QWord;
   end;
 
   TDataChannels = array of TDataChannel;
@@ -180,7 +181,7 @@ uses Main;
   end;
 
   function TCSVConverter.ParseMeasurement(): TMeasurement;
-  var i, n, b: Byte;
+  var i, b: Byte;
       Measurement: TMeasurement;
   begin
     with Measurement do begin
@@ -244,18 +245,25 @@ uses Main;
   end;
 
   function TCSVConverter.ParseDataChannel(RecordLen: longWord): TDataChannel;
-  var DataChannel                       : TDataChannel;
-      DLISNameLen, UnitsLen, RepCodeLen : Byte;
-      i, b                              : Byte;
+  var DataChannel    : TDataChannel;
+      DLISNameLen,
+      UnitsLen,
+      RepCodeLen,
+      SamplesLen     : Byte;
+      i, b           : Byte;
+      wStr           : String;
   begin
     DLISNameLen:= 10;
     UnitsLen:= 4;
     RepCodeLen:= 2;
+    SamplesLen:= 10;
+    if RecordLength < 42 then SamplesLen:= 4;
     if RecordLength >= 52 then DLISNameLen:= 16;
     with DataChannel do begin
        DLISName:= '';
        Units:= '';
        RepCode:= '';
+       wStr:= '';
        for i:= 0 to DLISNameLen - 1 do begin
           b:= ReadCurrentByte;
           if b > 0 then DLISName:= DLISName + Chr(b);
@@ -268,10 +276,14 @@ uses Main;
           b:= ReadCurrentByte;
           if b > 0 then RepCode:= RepCode + Chr(b);
        end;
+       for i:= 0 to SamplesLen - 1 do begin
+          b:= ReadCurrentByte;
+          if b > 0 then wStr:= wStr + Chr(b);
+       end;
+       Samples:= StrToInt(wStr);
+       if Samples > 1 then DLISName:= DLISName + '[]';
     end;
-    { Increase offset for Samples & Absent Value data }
-    if RecordLength < 42 then IncDataOffset(24) { TFF V2.0 }
-    else IncDataOffset(30);                     { TFF V3.0 or V4.0 }
+    IncDataOffset(RecordLen - DLISNameLen - UnitsLen - RepCodeLen - SamplesLen);
     Result:= DataChannel;
   end;
 
@@ -302,47 +314,58 @@ uses Main;
                      if DateTimeType = 1 then FrameStr:= DateTimeToStr(IncMilliSecond(StartDate, Round(F4 * 100000 )))
                      else if DateTimeType = 2 then FrameStr:= IntToStr(DateTimeToUnix(IncMilliSecond(StartDate, Round(F4 * 100000 ))))
                           else FrameStr:= FloatToStrF(F4, ffFixed, 10, App.FloatDigits.Value);
+                     IncDataOffset(4);
                   end
-                  else FrameStr:= FloatToStrF(F4, ffFixed, 10, App.FloatDigits.Value);
-                  IncDataOffset(4);
+                  else begin
+                     FrameStr:= FloatToStrF(F4, ffFixed, 10, App.FloatDigits.Value);
+                     if (F4 = -999.25) or (ChannelsList[i].Samples = 1) then IncDataOffset(4)
+                     else IncDataOffset(4 * ChannelsList[i].Samples);
+                  end;
                 end;
           'F8': begin
                   Move(Bytes[DataOffset], F8, 8);
                   FrameStr:= FloatToStrF(F8, ffFixed, 10, App.FloatDigits.Value);
-                  IncDataOffset(8);
+                  if (F8 = -999.25) or (ChannelsList[i].Samples = 1) then IncDataOffset(8)
+                  else IncDataOffset(8 * ChannelsList[i].Samples);
                 end;
           'I1': begin
                   I1:= ReadCurrentByte;
                   FrameStr:= IntToStr(I1);
+                  if (I1 <> 127) And (ChannelsList[i].Samples > 1) then IncDataOffset(ChannelsList[i].Samples - 1);
                 end;
           'U1': begin
                   U1:= ReadCurrentByte;
                   FrameStr:= IntToStr(U1);
+                  if (I1 <> 255) And (ChannelsList[i].Samples > 1) then IncDataOffset(ChannelsList[i].Samples - 1);
                 end;
           'I2': begin
                    Move(Bytes[DataOffset], I2, 2);
                    FrameStr:= IntToStr(I2);
-                   IncDataOffset(2);
+                   if I2 = 32767 then IncDataOffset(2)
+                   else IncDataOffset(2 * ChannelsList[i].Samples);
                 end;
           'U2': begin
                    Move(Bytes[DataOffset], U2, 2);
                    FrameStr:= IntToStr(U2);
-                   IncDataOffset(2);
+                   if (U2 = 65535) or (ChannelsList[i].Samples = 1) then IncDataOffset(2)
+                   else IncDataOffset(2 * ChannelsList[i].Samples);
                 end;
           'U4': begin
                    Move(Bytes[DataOffset], U4, 4);
                    FrameStr:= IntToStr(U4);
-                   IncDataOffset(4);
+                   if (U4 = 4294967295) or (ChannelsList[i].Samples = 1) then IncDataOffset(4)
+                   else IncDataOffset(4 * ChannelsList[i].Samples);
                 end;
           'I4': begin
                    Move(Bytes[DataOffset], I4, 4);
                    FrameStr:= IntToStr(I4);
-                   IncDataOffset(4);
+                   if (I4 = 2147483647) or (ChannelsList[i].Samples = 1) then IncDataOffset(4)
+                   else IncDataOffset(4 * ChannelsList[i].Samples);
                 end;
           'U8': begin
                    Move(Bytes[DataOffset], U8, 8);
                    FrameStr:= IntToStr(U8);
-                   IncDataOffset(4);
+                   IncDataOffset(8);
                 end
         end;
         if CSVSeparator <> '' then Frame:= Frame + FrameStr + CSVSeparator
@@ -366,6 +389,7 @@ uses Main;
     ChannelsCount:= 0;
     ErrorCode:= NO_ERROR;
     isFirstFrame:= True;
+    ProgressInit(CurrentFileSize, 'Converting');
     repeat
        GetRecordLength;
        RecordType:= Chr(ReadCurrentByte);
@@ -393,10 +417,10 @@ uses Main;
                   isFirstFrame:= False;
                   CSVData.Add(ParseFrame(DataChannels));
                end;
-          //'B': IncDataOffset(RecordLength);
-          'B': Inc(DataOffset, RecordLength);
+          'B': IncDataOffset(RecordLength);
        else ErrorCode:= WRONG_FILE_FORMAT;
        end;
+       App.ProcessProgress.Position:= DataOffset;
     until EndOfFile Or (ErrorCode > 0);
     Channels:= '';
   end;

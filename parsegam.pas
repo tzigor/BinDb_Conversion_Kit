@@ -19,7 +19,7 @@ begin
   TffStructure.Init;
   TffStructure.AddChannel('TIME', '100S', 'F4', '1', Tff_Ver);
   TffStructure.AddChannel('Temp', 'C', 'I1', '1', Tff_Ver);
-  TffStructure.AddChannel('Gama', 'Cnt', 'U2', '1', Tff_Ver);
+  TffStructure.AddChannel('Gamma', 'Cnt', 'U2', '1', Tff_Ver);
   TffStructure.AddChannel('Status', '', 'U1', '1', Tff_Ver);
   TffStructure.AddChannel('Blank', '', 'U1', '1', Tff_Ver);
 end;
@@ -64,7 +64,7 @@ begin
           IncDataOffset(1);
 
           Move(Bytes[DataOffset], U2, 2);
-          TffFrames.AddData(TffStructure.GetOffsetByName('Gama'), U2);
+          TffFrames.AddData(TffStructure.GetOffsetByName('Gamma'), U2);
           IncDataOffset(2);
 
           for i:=1 to 3 do begin
@@ -72,7 +72,7 @@ begin
              TffFrames.AddData(TffStructure.GetOffsetByName('Temp'), I1);
 
              Move(Bytes[DataOffset], U2, 2);
-             TffFrames.AddData(TffStructure.GetOffsetByName('Gama'), U2);
+             TffFrames.AddData(TffStructure.GetOffsetByName('Gamma'), U2);
              IncDataOffset(2);
           end;
 

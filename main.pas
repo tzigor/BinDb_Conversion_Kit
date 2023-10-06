@@ -8,7 +8,7 @@ uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ComCtrls, StdCtrls,
   Spin, DateUtils, StrUtils, Utils, UserTypes, ParseBin, TffObjects,
   BIN_DB_Converter, CSV_Converter, Buttons, LCLType, ExtCtrls, ParseGam2,
-  ParseGam, ParseLTB, ConvertVersion;
+  ParseGam, ParseLTB, ConvertVersion, ParseBinDb;
 
 type
 
@@ -19,6 +19,10 @@ type
     AddMeasure: TCheckBox;
     AddUnitsFlag: TCheckBox;
     AddTypeFlag: TCheckBox;
+    Label3: TLabel;
+    Label6: TLabel;
+    Label7: TLabel;
+    Label8: TLabel;
     RecordRateL: TLabel;
     millisecL: TLabel;
     CloseApp: TBitBtn;
@@ -38,9 +42,12 @@ type
     Label5: TLabel;
     ADVSupport: TLabel;
     Indicator: TLabel;
-    SortingLabel: TLabel;
-    SortingProgress: TProgressBar;
+    ProcessLabel: TLabel;
+    ProcessProgress: TProgressBar;
     S100: TRadioButton;
+    ShiftHr: TSpinEdit;
+    ShiftMin: TSpinEdit;
+    ShiftSec: TSpinEdit;
     TxtLength: TSpinEdit;
     UnixTime: TRadioButton;
     TimeEx: TLabel;
@@ -113,8 +120,8 @@ begin
   TFFVersion:= TFF_V30; // By default
   NumberEx.Caption:= FloatToStrF(ExampleValue, ffFixed, 10, FloatDigits.Value);
   Indicator.Caption:= '';
-  SortingProgress.Visible:= False;
-  SortingLabel.Visible:= False;
+  ProcessProgress.Visible:= False;
+  ProcessLabel.Caption:= '';
   ShowIndicator:= True;
 end;
 
@@ -131,11 +138,7 @@ var
 
 begin
   n:= Length(FrameRecords);
-  App.SortingProgress.Max:= n;
-  App.SortingProgress.Position:= 0;
-  App.SortingProgress.Visible:= True;
-  App.SortingLabel.Visible:= True;
-  App.SortingLabel.Refresh;
+  ProgressInit(n, 'Sorting');
   for p := 0 to n - 1 do
   begin
     index:= FrameRecords[p].DateTime;
@@ -148,34 +151,36 @@ begin
        Dec(q);
     end;
     FrameRecords[q].DateTime:= index;
-    App.SortingProgress.Position:= p;
+    App.ProcessProgress.Position:= p;
   end;
-  App.SortingProgress.Visible:= False;
-  App.SortingLabel.Visible:= False;
+  ProgressDone;
 end;
 
 procedure BinToBin_Db();
 begin
   if LoadSourceFile('bin', 100) then begin
      BinDataChannelsSet(TFFVersion);
-     FrameRecords:= BinParser;
-     if App.SortTime.Checked then SortFrameRecordsByTime;
-     if ErrorCode = NO_ERROR then begin
+     FrameRecords:= BinDbParser(TFFVersion);
 
-         BinDbConverter.Init(TFFVersion, FrameRecords);
-         BinDbConverter.CreateParameters();
-         BinDbConverter.AddParameter('FORMAT=PC');
-         BinDbConverter.AddParameter('TYPE=TFF');
-         BinDbConverter.AddParameter('ToolId type=SIB');
-         BinDbConverter.AddParameter('ToolId MfgCode=SIB');
-         BinDbConverter.Composer(TffStructure.GetTFFDataChannels, FrameRecords);
 
-         SaveByteArray(BinDbConverter.GetBinDbData, ReplaceText(CurrentOpenedFile,ExtractFileExt(CurrentOpenedFile),'') + '.bin_db');
-         //Application.MessageBox('File converted','', MB_ICONINFORMATION + MB_OK);
-
-         BinDbConverter.Done;
-     end
-     else Application.MessageBox(GetErrorMessage(ErrorCode),'Error', MB_ICONERROR + MB_OK);
+     //FrameRecords:= BinParser;
+     //if App.SortTime.Checked then SortFrameRecordsByTime;
+     //if ErrorCode = NO_ERROR then begin
+     //
+     //    BinDbConverter.Init(TFFVersion, FrameRecords);
+     //    BinDbConverter.SetTimeShiftByUser(App.ShiftHr.Value, App.ShiftMin.Value, App.ShiftSec.Value);
+     //    BinDbConverter.CreateParameters();
+     //    BinDbConverter.AddParameter('FORMAT=PC');
+     //    BinDbConverter.AddParameter('TYPE=TFF');
+     //    BinDbConverter.AddParameter('ToolId type=SIB');
+     //    BinDbConverter.AddParameter('ToolId MfgCode=SIB');
+     //    BinDbConverter.Composer(TffStructure.GetTFFDataChannels, FrameRecords);
+     //
+     //    SaveByteArray(BinDbConverter.GetBinDbData, ReplaceText(CurrentOpenedFile,ExtractFileExt(CurrentOpenedFile),'') + '.bin_db');
+     //
+     //    BinDbConverter.Done;
+     //end
+     //else Application.MessageBox(GetErrorMessage(ErrorCode),'Error', MB_ICONERROR + MB_OK);
   end;
 end;
 
@@ -188,6 +193,7 @@ begin
      if ErrorCode = NO_ERROR then begin
 
          BinDbConverter.Init(TFFVersion, FrameRecords);
+         BinDbConverter.SetTimeShiftByUser(App.ShiftHr.Value, App.ShiftMin.Value, App.ShiftSec.Value);
          BinDbConverter.CreateParameters();
          BinDbConverter.Composer(TffStructure.GetTFFDataChannels, FrameRecords);
 
@@ -208,6 +214,7 @@ begin
      if ErrorCode = NO_ERROR then begin
 
          BinDbConverter.Init(TFFVersion, FrameRecords);
+         BinDbConverter.SetTimeShiftByUser(App.ShiftHr.Value, App.ShiftMin.Value, App.ShiftSec.Value);
          BinDbConverter.CreateParameters();
          BinDbConverter.Composer(TffStructure.GetTFFDataChannels, FrameRecords);
 
@@ -228,6 +235,7 @@ begin
      if ErrorCode = NO_ERROR then begin
 
          BinDbConverter.Init(TFFVersion, FrameRecords);
+         BinDbConverter.SetTimeShiftByUser(App.ShiftHr.Value, App.ShiftMin.Value, App.ShiftSec.Value);
          BinDbConverter.CreateParameters();
          BinDbConverter.Composer(TffStructure.GetTFFDataChannels, FrameRecords);
 
@@ -275,6 +283,7 @@ begin
        Application.MessageBox('Unable to save CSV file. Probably it is being used by another process','Error', MB_ICONERROR + MB_OK);
      end;
      CSVConverter.Done;
+     ProgressDone;
   end;
 end;
 
@@ -302,6 +311,7 @@ begin
        Application.MessageBox('Unable to save TXT file. Probably it is being used by another process','Error', MB_ICONERROR + MB_OK);
      end;
      CSVConverter.Done;
+     ProgressDone;
   end;
 end;
 

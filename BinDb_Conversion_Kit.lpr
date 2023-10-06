@@ -11,7 +11,7 @@ uses
   {$ENDIF}
   Interfaces, // this includes the LCL widgetset
   Forms, Main, TffObjects, ParseBin, CSV_Converter, ParseGam2, ParseGam,
-  ParseLTB, ConvertVersion
+  ParseLTB, ConvertVersion, ParseBinDb
   { you can add units after this };
 
 {$R *.res}

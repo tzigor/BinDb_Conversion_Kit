@@ -11,16 +11,18 @@ uses
 type
   TBinDbConverter = object
   private
-     TFFVersion    : Byte;
-     BinDbData     : TBytes;
-     DataOffset    : longWord;
-     FirstDateTime : TDateTime; // Acquisition Start Date/Time
-     TimeShift     : Single;
-     MRL           : Word;
+     TFFVersion      : Byte;
+     BinDbData       : TBytes;
+     DataOffset      : longWord;
+     FirstDateTime   : TDateTime; // Acquisition Start Date/Time
+     TimeShift       : Single;
+     TimeShiftByUser : Int16;
+     MRL             : Word;
   public
      constructor Init(Version: Byte; FrameRecords: TFrameRecords);
      destructor Done;
      function GetBinDbData: TBytes;
+     procedure SetTimeShiftByUser(hr, min, sec: Int16);
      procedure AddLength(Len: LongWord);
      procedure CreateParameters();
      procedure AddParameter(Param: String);
@@ -35,9 +37,10 @@ constructor TBinDbConverter.Init(Version: Byte; FrameRecords: TFrameRecords);
 begin
   SetLength(BinDbData, 0);
   DataOffset:= 0;
+  TimeShiftByUser:= 0;
   TFFVersion:= Version;
+  MRL:= Length(FrameRecords[0].Data) + 4 + 1; { + 4 bytes for time + 'F' }
   FirstDateTime:= FrameRecords[0].DateTime;
-  MRL:= Length(FrameRecords[0].Data) + 4 + 1; // + 4 bytes for time + 'F'
   TimeShift:= SecondsBetween(FirstDateTime, DateOf(FirstDateTime)) / 100;
 end;
 
@@ -49,6 +52,13 @@ end;
 function TBinDbConverter.GetBinDbData: TBytes;
 begin
   Result:= BinDbData;
+end;
+
+procedure TBinDbConverter.SetTimeShiftByUser(hr, min, sec: Int16);
+begin
+  TimeShiftByUser:= hr * 3600 + min * 60 + sec;
+  FirstDateTime:= IncSecond(FirstDateTime, TimeShiftByUser);
+  TimeShift:= SecondsBetween(FirstDateTime, DateOf(FirstDateTime)) / 100;
 end;
 
 procedure TBinDbConverter.AddLength(Len: LongWord);
@@ -79,7 +89,7 @@ end;
 procedure TBinDbConverter.AddParameter(Param: String);
 var i, ParamSize: Word;
 begin
-  ParamSize:= Length(Param) + 2; // + 'P' + 0-(terminator)
+  ParamSize:= Length(Param) + 2; { + 'P' + 0-(terminator) }
   AddLength(ParamSize);
   Insert(Ord('P'), BinDbData, DATA_MAX_SIZE);
   for i:=1 to ParamSize - 1 do Insert(Ord(Param[i]), BinDbData, DATA_MAX_SIZE);
@@ -148,9 +158,9 @@ begin
   NumOfFrames:= Length(FrameRecords);
   for i:=0 to NumOfFrames - 1 do begin
      FrameLen:= Length(FrameRecords[i].Data);
-     AddLength(FrameLen + 4 + 1); // + 4 bytes for time + 'F'
+     AddLength(FrameLen + 4 + 1); { + 4 bytes for time + 'F' }
      Insert(Ord('F'), BinDbData, DATA_MAX_SIZE);
-     F4:= (SecondsBetween(FirstDateTime, FrameRecords[i].DateTime) / 100) + TimeShift;
+     F4:= (SecondsBetween(FirstDateTime, IncSecond(FrameRecords[i].DateTime, TimeShiftByUser)) / 100) + TimeShift;
      Move(F4, F4Array, 4);
      for j:=0 to 3 do Insert(F4Array[j], BinDbData, DATA_MAX_SIZE);
      for j:=0 to FrameLen - 1 do Insert(FrameRecords[i].Data[j], BinDbData, DATA_MAX_SIZE);

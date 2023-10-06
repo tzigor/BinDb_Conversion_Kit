@@ -92,6 +92,11 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="ConvertVersion"/>
       </Unit>
+      <Unit>
+        <Filename Value="parsebindb.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ParseBinDb"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

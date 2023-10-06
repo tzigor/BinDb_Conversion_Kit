@@ -1,10 +1,10 @@
 object App: TApp
-  Left = 2140
+  Left = 2092
   Height = 422
-  Top = -714
+  Top = -726
   Width = 589
   BorderStyle = bsSingle
-  Caption = 'Bin-Db Conversion Kit v1.1.0 Portable'
+  Caption = 'Bin-Db Conversion Kit v1.2.0 Portable'
   ClientHeight = 422
   ClientWidth = 589
   OnCreate = FormCreate
@@ -337,8 +337,8 @@ object App: TApp
             ItemIndex = 0
             Items.Strings = (
               'Power control + DnI  .BIN files'
-              'Gama journal  .GAM2 files'
-              'Gama history  .GAM files'
+              'Gamma journal  .GAM2 files'
+              'Gamma history  .GAM files'
               'LTB module  .LTB files'
             )
             OnClick = FileTypeListClick
@@ -402,20 +402,99 @@ object App: TApp
           ParentFont = False
           Visible = False
         end
+        object Label3: TLabel
+          Left = 264
+          Height = 15
+          Top = 46
+          Width = 55
+          Caption = 'Time shift:'
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clNavy
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          ParentColor = False
+          ParentFont = False
+        end
+        object ShiftHr: TSpinEdit
+          Left = 328
+          Height = 23
+          Top = 40
+          Width = 40
+          MaxValue = 8760
+          MinValue = -8760
+          TabOrder = 5
+        end
+        object ShiftMin: TSpinEdit
+          Left = 400
+          Height = 23
+          Top = 40
+          Width = 42
+          MaxValue = 59
+          MinValue = -59
+          TabOrder = 6
+        end
+        object ShiftSec: TSpinEdit
+          Left = 480
+          Height = 23
+          Top = 40
+          Width = 40
+          MaxValue = 59
+          MinValue = -59
+          TabOrder = 7
+        end
+        object Label6: TLabel
+          Left = 372
+          Height = 15
+          Top = 46
+          Width = 13
+          Caption = 'Hr'
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clNavy
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          ParentColor = False
+          ParentFont = False
+        end
+        object Label7: TLabel
+          Left = 446
+          Height = 15
+          Top = 46
+          Width = 21
+          Caption = 'Min'
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clNavy
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          ParentColor = False
+          ParentFont = False
+        end
+        object Label8: TLabel
+          Left = 524
+          Height = 15
+          Top = 46
+          Width = 18
+          Caption = 'Sec'
+          Font.CharSet = ANSI_CHARSET
+          Font.Color = clNavy
+          Font.Pitch = fpVariable
+          Font.Quality = fqDraft
+          ParentColor = False
+          ParentFont = False
+        end
       end
-      object SortingProgress: TProgressBar
-        Left = 56
+      object ProcessProgress: TProgressBar
+        Left = 80
         Height = 16
         Top = 371
-        Width = 404
+        Width = 380
         TabOrder = 2
       end
-      object SortingLabel: TLabel
+      object ProcessLabel: TLabel
         Left = 8
         Height = 17
         Top = 368
-        Width = 42
-        Caption = 'Sorting'
+        Width = 63
+        Caption = 'Converting'
         Font.CharSet = ANSI_CHARSET
         Font.Color = clNavy
         Font.Height = -13
@@ -425,7 +504,7 @@ object App: TApp
         ParentFont = False
       end
       object Indicator: TLabel
-        Left = 224
+        Left = 232
         Height = 25
         Top = 344
         Width = 94

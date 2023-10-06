@@ -868,7 +868,7 @@ begin
         end;  { IsValidDateTime }
       end;  { CurrentRecord.N }
     end; { b = $C0 }
-  until EndOfFile Or (ErrorCode > 0);
+  until EndOfFile Or ((ErrorCode > 0) And ValidDateTime);
   if TffFrames.GetFrameRecords = Nil then ErrorCode:= WRONG_FILE_FORMAT;
   Result:= TffFrames.GetFrameRecords;
   TffFrames.Done;

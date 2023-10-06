@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ComCtrls, DateUtils,
-  UserTypes, StrUtils;
+  UserTypes, StrUtils, Buttons, LCLType;
 
 function LoadByteArray(const AFileName: string): TBytes;
 procedure SaveByteArray(AByteArray: TBytes; const AFileName: string);
@@ -28,6 +28,8 @@ function SetStringLength(Str: String; n: Word): String;
 procedure IncDataOffset(n: LongWord);
 function GetErrorMessage(error: Byte): PChar;
 function ReadValidDateTime(var DateTime: TDateTime): Boolean;
+procedure ProgressInit(n: LongWord; PLabel: String);
+procedure ProgressDone();
 
 implementation
 Uses Main;
@@ -68,14 +70,18 @@ procedure SaveByteArray(AByteArray: TBytes; const AFileName: string);
 var
   AStream: TStream;
 begin
-  if FileExists(AFileName) then DeleteFile(AFileName);
-  AStream := TFileStream.Create(AFileName, fmCreate);
   try
-     AStream.WriteBuffer(Pointer(AByteArray)^, Length(AByteArray));
-     App.Indicator.Caption:= 'File converted';
-     App.Indicator.Refresh;
-  finally
-     AStream.Free;
+    if FileExists(AFileName) then DeleteFile(AFileName);
+    AStream := TFileStream.Create(AFileName, fmCreate);
+    try
+       AStream.WriteBuffer(Pointer(AByteArray)^, Length(AByteArray));
+       App.Indicator.Caption:= 'File converted';
+       App.Indicator.Refresh;
+    finally
+       AStream.Free;
+    end;
+  except
+    Application.MessageBox('Target file is being used by another process','Error', MB_ICONERROR + MB_OK);
   end;
 end;
 
@@ -171,9 +177,28 @@ begin
   Result:= False;
 end;
 
+procedure ProgressInit(n: LongWord; PLabel: String);
+begin
+  App.ProcessProgress.Max:= n;
+  App.ProcessProgress.Position:= 0;
+  App.ProcessProgress.Visible:= True;
+  App.ProcessLabel.Caption:= PLabel;
+  App.ProcessLabel.Refresh;
+end;
+
+procedure ProgressDone();
+begin
+  App.ProcessProgress.Position:= 0;
+  App.ProcessProgress.Visible:= False;
+  App.ProcessLabel.Caption:= '';
+  App.ProcessLabel.Refresh;
+end;
+
+
+
 function FillSingle(H1, H0, L1, L0: Byte): Single;
 var Flt: Single;
-    FltBytes: array[1..3] of Byte absolute Flt;
+    FltBytes: array[1..4] of Byte absolute Flt;
 begin
    Flt:= 0;
    FltBytes[1]:= L0;

@@ -19,7 +19,7 @@ TDataChannel = record
   DLISName: String16;
   Units: String4;
   RepCode: String2;
-  Samples: longInt;
+  Samples: LongInt;
   AbsentValue: String20;
 end;
 
@@ -40,10 +40,9 @@ var
     UnitsLen:= 4;
     RepCodeLen:= 2;
     SamplesLen:= 10;
-    AbsentValueLen:= 20;
-    if RecordLength = 40 then SamplesLen:= 4;
-    if RecordLength = 52 then DLISNameLen:= 16;
-
+    if RecordLength < 42 then SamplesLen:= 4;
+    if RecordLength >= 52 then DLISNameLen:= 16;
+    AbsentValueLen:= RecordLength - DLISNameLen - UnitsLen - RepCodeLen - SamplesLen;
     with DataChannel do begin
        DLISName:= '';
        Units:= '';
@@ -71,7 +70,7 @@ var
        for i:= 0 to SamplesLen - 1 do begin
           b:= ReadCurrentByte;
           if b > 0 then StrSamples:= StrSamples + Chr(b);
-        end;
+       end;
        TryStrToInt(Trim(StrSamples), Samples);
 
        for i:= 0 to AbsentValueLen - 1 do begin
@@ -226,11 +225,9 @@ var
                              CopyRecord('F', RecordLength);
                              PrevMilliseconds:= Milliseconds;
                           end
-                          else
-                            Inc(DataOffset, RecordLength);
+                          else Inc(DataOffset, RecordLength);
                       end
-                      else if RecordType = 'B' then
-                      CopyRecord('B', RecordLength)
+                      else if RecordType = 'B' then CopyRecord('B', RecordLength)
                            else if RecordType = 'D' then begin
                                    ComposeDataChannel(ParseDataChannel(RecordLength));
                                 end;
