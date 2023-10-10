@@ -200,42 +200,40 @@ var
       PrevMilliseconds: LongWord;
       Diff, RecordRateValue: LongWord;
   begin
-    if LoadSourceFile('bin_db', 100) then begin
-       EndOfFile:= False;
-       ErrorCode:= NO_ERROR;
-       PrevMilliseconds:= 0;
-       setLength(DataChannels, 0);
-       RecordRateValue:= App.RecordRate.Value;
-       if CurrentFileSize > 1000 then FileCheck:= Chr(Bytes[2]) + Chr(Bytes[3]) + Chr(Bytes[4]) + Chr(Bytes[5]);
-       if FileCheck = 'PFFV' then begin
-         Bytes[8]:= Ord(IntToStr(TFFVersion)[1]);
-         SetLength(OutBytes, CurrentFileSize);
-         DataOffset:= 0;
-         OutCounter:= 0;
-         repeat
-            RecordLength:= ReadCurrentByte;
-            RecordLength:= (RecordLength or (ReadCurrentByte shl 8)) - 1;
-            RecordType:= Chr(ReadCurrentByte);
-            if RecordType = 'P' then CopyRecord('P', RecordLength)
-            else if RecordType = 'M' then CopyRecord('M', RecordLength)
-                 else if RecordType = 'F' then begin
-                          Milliseconds:= GetDateTimeMillis;
-                          Diff:= Milliseconds - PrevMilliseconds + 10;
-                          if Diff >= RecordRateValue then begin
-                             CopyRecord('F', RecordLength);
-                             PrevMilliseconds:= Milliseconds;
-                          end
-                          else Inc(DataOffset, RecordLength);
-                      end
-                      else if RecordType = 'B' then CopyRecord('B', RecordLength)
-                           else if RecordType = 'D' then begin
-                                   ComposeDataChannel(ParseDataChannel(RecordLength));
-                                end;
-         until EndOfFile Or (ErrorCode > 0);
-         SetLength(OutBytes, OutCounter);
-         SaveByteArray(OutBytes, ReplaceText(CurrentOpenedFile, ExtractFileExt(CurrentOpenedFile),'') + '_converted.bin_db');
-       end
-     end;
+     EndOfFile:= False;
+     ErrorCode:= NO_ERROR;
+     PrevMilliseconds:= 0;
+     setLength(DataChannels, 0);
+     RecordRateValue:= App.RecordRate.Value;
+     if CurrentFileSize > 1000 then FileCheck:= Chr(Bytes[2]) + Chr(Bytes[3]) + Chr(Bytes[4]) + Chr(Bytes[5]);
+     if FileCheck = 'PFFV' then begin
+       Bytes[8]:= Ord(IntToStr(TFFVersion)[1]);
+       SetLength(OutBytes, CurrentFileSize);
+       DataOffset:= 0;
+       OutCounter:= 0;
+       repeat
+          RecordLength:= ReadCurrentByte;
+          RecordLength:= (RecordLength or (ReadCurrentByte shl 8)) - 1;
+          RecordType:= Chr(ReadCurrentByte);
+          if RecordType = 'P' then CopyRecord('P', RecordLength)
+          else if RecordType = 'M' then CopyRecord('M', RecordLength)
+               else if RecordType = 'F' then begin
+                        Milliseconds:= GetDateTimeMillis;
+                        Diff:= Milliseconds - PrevMilliseconds + 10;
+                        if Diff >= RecordRateValue then begin
+                           CopyRecord('F', RecordLength);
+                           PrevMilliseconds:= Milliseconds;
+                        end
+                        else Inc(DataOffset, RecordLength);
+                    end
+                    else if RecordType = 'B' then CopyRecord('B', RecordLength)
+                         else if RecordType = 'D' then begin
+                                 ComposeDataChannel(ParseDataChannel(RecordLength));
+                              end;
+       until EndOfFile Or (ErrorCode > 0);
+       SetLength(OutBytes, OutCounter);
+       SaveByteArray(OutBytes, ReplaceText(CurrentOpenedFile, ExtractFileExt(CurrentOpenedFile),'') + '_converted.bin_db');
+     end
   end;
 
 end.

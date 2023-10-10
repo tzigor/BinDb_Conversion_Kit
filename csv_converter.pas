@@ -311,8 +311,8 @@ uses Main;
           'F4': begin
                   Move(Bytes[DataOffset], F4, 4);
                   if i = 0 then begin  { if TIME channel }
-                     if DateTimeType = 1 then FrameStr:= DateTimeToStr(IncMilliSecond(StartDate, Round(F4 * 100000 )))
-                     else if DateTimeType = 2 then FrameStr:= IntToStr(DateTimeToUnix(IncMilliSecond(StartDate, Round(F4 * 100000 ))))
+                     if DateTimeType = 1 then FrameStr:= DateTimeToStr(IncMilliSecond(StartDate, Round(F4 * 100000)))
+                     else if DateTimeType = 2 then FrameStr:= IntToStr(DateTimeToUnix(IncMilliSecond(StartDate, Round(F4 * 100000))))
                           else FrameStr:= FloatToStrF(F4, ffFixed, 10, App.FloatDigits.Value);
                      IncDataOffset(4);
                   end
@@ -377,18 +377,20 @@ uses Main;
 
   procedure TCSVConverter.CSVComposer();
   var
-      RecordType     : Char;
-      isFirstFrame   : Boolean;
-      Channels       : String;
-      NewParameter   : String;
-      DataChannels   : TDataChannels;
-      ChannelsCount  : Word;
-      CurrentChannel : String;
+      RecordType      : Char;
+      isFirstFrame    : Boolean;
+      Channels        : String;
+      NewParameter    : String;
+      DataChannels    : TDataChannels;
+      ChannelsCount   : Word;
+      CurrentChannel  : String;
+      i, iPrevPercent : Integer;
   begin
     Channels:= '';
     ChannelsCount:= 0;
     ErrorCode:= NO_ERROR;
     isFirstFrame:= True;
+    iPrevPercent:= 0;
     ProgressInit(CurrentFileSize, 'Converting');
     repeat
        GetRecordLength;
@@ -420,7 +422,11 @@ uses Main;
           'B': IncDataOffset(RecordLength);
        else ErrorCode:= WRONG_FILE_FORMAT;
        end;
-       App.ProcessProgress.Position:= DataOffset;
+       i:= Trunc(DataOffset * 100 / CurrentFileSize);
+       if (i > iPrevPercent) then begin
+         App.ProcessProgress.Position:= DataOffset;
+         iPrevPercent:= i;
+       end;
     until EndOfFile Or (ErrorCode > 0);
     Channels:= '';
   end;

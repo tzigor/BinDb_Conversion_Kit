@@ -13,6 +13,13 @@ function BinDbParser(Tff_Ver: Byte): TFrameRecords;
 implementation
 uses Main;
 
+var
+    StartDate     : TDateTime;
+    StartTime     : TDateTime;
+    FullDateTime  : TDateTime;
+    TffFrames     : TTffFrames;
+    isEnergiya    : Boolean;
+
 function FindStartDate(Parameter: String; var DateTime: TDateTime): Boolean;
 begin
    Result:= False;
@@ -111,7 +118,11 @@ begin
         if b > 0 then Samples:= Samples + Chr(b);
      end;
      wSamples:= StrToInt(Samples);
-     if wSamples > 1 then DLIS:= DLIS + '[]';
+     if wSamples > 1 then begin
+        DLIS:= DLIS + '[]';
+        isEnergiya:= True;
+        App.EnergiyaType.Visible:= True;
+     end;
      for i:= 0 to AbsentValueLen - 1 do begin
         b:= ReadCurrentByte;
         if b > 0 then AbsentValue:= AbsentValue + Chr(b);
@@ -120,10 +131,23 @@ begin
   Result:= DataChannel;
 end;
 
-function ParseFrame(ChannelsList: TTFFDataChannels): String;
+procedure ParseFrame(RecordLength: longWord);
+var
+   F4        : Single;
+   TimeShift : Single;
+begin
+   FullDateTime:= StartDate + StartTime;
+   TimeShift:= SecondsBetween(FullDateTime, StartDate) / 100;
+   Move(Bytes[DataOffset], F4, 4);
+   Inc(DataOffset, 4);
+   FullDateTime:= IncSecond(FullDateTime, Round((F4 - TimeShift) * 100));
+   TffFrames.AddRecord(FullDateTime, TffStructure.GetDataChannelSize, TffStructure.GetTFFDataChannels);
+   TffFrames.MoveData();
+   Inc(DataOffset, RecordLength - 4);
+end;
+
+procedure ParseFrameNRG(ChannelsList: TTFFDataChannels);
 var i, ChannelsCount : Word;
-    FrameStr, Frame  : String;
-    DataCount        : longWord;
     I1               : ShortInt;
     U1               : Byte;
     I2               : SmallInt;
@@ -133,139 +157,148 @@ var i, ChannelsCount : Word;
     U8               : QWord;
     F4               : Single;
     F8               : Double;
+    wSamples         : LongInt;
+    TimeShift        : Single;
 
 begin
-   DataCount:= 0;
-   Frame:= '';
+   FullDateTime:= StartDate + StartTime;
+   TimeShift:= SecondsBetween(FullDateTime, StartDate) / 100;
    ChannelsCount:= length(ChannelsList);
    for i:=0 to ChannelsCount - 1 do begin
-      FrameStr:= '';
+      TryStrToInt(ChannelsList[i].Samples, wSamples);
       case ChannelsList[i].RepCode of
         'F4': begin
                 Move(Bytes[DataOffset], F4, 4);
                 if i = 0 then begin  { if TIME channel }
-                   if DateTimeType = 1 then FrameStr:= DateTimeToStr(IncMilliSecond(StartDate, Round(F4 * 100000 )))
-                   else if DateTimeType = 2 then FrameStr:= IntToStr(DateTimeToUnix(IncMilliSecond(StartDate, Round(F4 * 100000 ))))
-                        else FrameStr:= FloatToStrF(F4, ffFixed, 10, App.FloatDigits.Value);
+                   FullDateTime:= IncSecond(FullDateTime, Round((F4 - TimeShift) * 100));
+                   TffFrames.AddRecord(FullDateTime, TffStructure.GetDataChannelSize, TffStructure.GetTFFDataChannels);
                    IncDataOffset(4);
                 end
                 else begin
-                   FrameStr:= FloatToStrF(F4, ffFixed, 10, App.FloatDigits.Value);
-                   if (F4 = -999.25) or (ChannelsList[i].Samples = 1) then IncDataOffset(4)
-                   else IncDataOffset(4 * ChannelsList[i].Samples);
+                   TffFrames.AddData(ChannelsList[i].Offset, F4);
+                   if (F4 = -999.25) or (wSamples = 1) then IncDataOffset(4)
+                   else IncDataOffset(4 * wSamples);
                 end;
               end;
         'F8': begin
                 Move(Bytes[DataOffset], F8, 8);
-                FrameStr:= FloatToStrF(F8, ffFixed, 10, App.FloatDigits.Value);
-                if (F8 = -999.25) or (ChannelsList[i].Samples = 1) then IncDataOffset(8)
-                else IncDataOffset(8 * ChannelsList[i].Samples);
+                TffFrames.AddData(ChannelsList[i].Offset, F8);
+                if (F8 = -999.25) or (wSamples = 1) then IncDataOffset(8)
+                else IncDataOffset(8 * wSamples);
               end;
         'I1': begin
                 I1:= ReadCurrentByte;
-                FrameStr:= IntToStr(I1);
-                if (I1 <> 127) And (ChannelsList[i].Samples > 1) then IncDataOffset(ChannelsList[i].Samples - 1);
+                TffFrames.AddData(ChannelsList[i].Offset, I1);
+                if (I1 <> 127) And (wSamples > 1) then IncDataOffset(wSamples - 1);
               end;
         'U1': begin
                 U1:= ReadCurrentByte;
-                FrameStr:= IntToStr(U1);
-                if (I1 <> 255) And (ChannelsList[i].Samples > 1) then IncDataOffset(ChannelsList[i].Samples - 1);
+                TffFrames.AddData(ChannelsList[i].Offset, U1);
+                if (U1 <> 255) And (wSamples > 1) then IncDataOffset(wSamples - 1);
               end;
         'I2': begin
                  Move(Bytes[DataOffset], I2, 2);
-                 FrameStr:= IntToStr(I2);
+                 TffFrames.AddData(ChannelsList[i].Offset, I2);
                  if I2 = 32767 then IncDataOffset(2)
-                 else IncDataOffset(2 * ChannelsList[i].Samples);
+                 else IncDataOffset(2 * wSamples);
               end;
         'U2': begin
                  Move(Bytes[DataOffset], U2, 2);
-                 FrameStr:= IntToStr(U2);
-                 if (U2 = 65535) or (ChannelsList[i].Samples = 1) then IncDataOffset(2)
-                 else IncDataOffset(2 * ChannelsList[i].Samples);
+                 TffFrames.AddData(ChannelsList[i].Offset, U2);
+                 if (U2 = 65535) or (wSamples = 1) then IncDataOffset(2)
+                 else IncDataOffset(2 * wSamples);
               end;
         'U4': begin
                  Move(Bytes[DataOffset], U4, 4);
-                 FrameStr:= IntToStr(U4);
-                 if (U4 = 4294967295) or (ChannelsList[i].Samples = 1) then IncDataOffset(4)
-                 else IncDataOffset(4 * ChannelsList[i].Samples);
+                 TffFrames.AddData(ChannelsList[i].Offset, U4);
+                 if (U4 = 4294967295) or (wSamples = 1) then IncDataOffset(4)
+                 else IncDataOffset(4 * wSamples);
               end;
         'I4': begin
                  Move(Bytes[DataOffset], I4, 4);
-                 FrameStr:= IntToStr(I4);
-                 if (I4 = 2147483647) or (ChannelsList[i].Samples = 1) then IncDataOffset(4)
-                 else IncDataOffset(4 * ChannelsList[i].Samples);
+                 TffFrames.AddData(ChannelsList[i].Offset, I4);
+                 if (I4 = 2147483647) or (wSamples = 1) then IncDataOffset(4)
+                 else IncDataOffset(4 * wSamples);
               end;
         'U8': begin
                  Move(Bytes[DataOffset], U8, 8);
-                 FrameStr:= IntToStr(U8);
+                 TffFrames.AddData(ChannelsList[i].Offset, U8);
                  IncDataOffset(8);
               end
       end;
-      if CSVSeparator <> '' then Frame:= Frame + FrameStr + CSVSeparator
-      else if i = 0 then Frame:= Frame + SetStringLength(FrameStr, 20) { convert to TXT} { i=0 mean TIME }
-           else Frame:= Frame + SetStringLength(FrameStr, ItemLength)
    end;
-   Result:= Frame;
 end;
 
 function BinDbParser(Tff_Ver: Byte): TFrameRecords;
 var
-    RecordType     : Char;
-    isFirstFrame   : Boolean;
-    Channels       : String;
-    NewParameter   : String;
-    ChannelsCount  : Word;
-    CurrentChannel : String;
+    RecordType      : Char;
+    NewParameter    : String;
 
-    ParamChannels : TStringList;
-    RecordLength  : LongWord;
-    DateTime      : TDateTime;
-    StartDate     : TDateTime;
-    StartTime     : TDateTime;
-    DataChannel   : TTFFDataChannel;
-    TffFrames     : TTffFrames;
+    ParamChannels   : TStringList;
+    RecordLength    : LongWord;
+    DataChannel     : TTFFDataChannel;
+    DateTime        : TDateTime;
+    i, iPrevPercent : Integer;
+
+    wStartTime, wEndTime : TDateTime;
 
 begin
-  Channels:= '';
-  ChannelsCount:= 0;
+
+  wStartTime:= Time;
+
   ErrorCode:= NO_ERROR;
-  isFirstFrame:= True;
+  isEnergiya:= False;
   TffStructure.Init;
-  ProgressInit(CurrentFileSize, 'Converting');
-  if ParamChannels is TStringList then FreeAndNil(ParamChannels);
+  TffFrames.Init;
+  ProgressInit(CurrentFileSize, 'Parsing');
+  iPrevPercent:= 0;
   ParamChannels:= TStringList.Create;
   repeat
      RecordLength:= GetRecordLength;
      RecordType:= Chr(ReadCurrentByte);
-     case RecordType of
-        'P': begin
-                NewParameter:= DataToStr(RecordLength);
-                ParamChannels.Add(NewParameter);
-                if FindStartDate(NewParameter, DateTime) then begin
-                   StartDate:= DateTime;
-                   ParamChannels.Delete(ParamChannels.Count - 1);
-                end;
-                if FindStartTime(NewParameter, DateTime) then begin
-                   StartTime:= DateTime;
-                   ParamChannels.Delete(ParamChannels.Count - 1);
-                end;
-             end;
-        'M': IncDataOffset(RecordLength);
-        'D': begin
-                DataChannel:= ParseDataChannel(RecordLength);
-                TffStructure.AddChannel(DataChannel.DLIS, DataChannel.Units, DataChannel.RepCode, DataChannel.Samples, Tff_Ver);
-                Insert(ParseDataChannel(RecordLength), DataChannels, DATA_MAX_SIZE);
-                Inc(ChannelsCount);
-             end;
-        'F': begin
-
-             end;
-        'B': IncDataOffset(RecordLength);
-     else ErrorCode:= WRONG_FILE_FORMAT;
+     if Not EndOfFile then begin
+         case RecordType of
+            'P': begin
+                    NewParameter:= DataToStr(RecordLength);
+                    ParamChannels.Add(NewParameter);
+                    if FindStartDate(NewParameter, DateTime) then begin
+                       StartDate:= DateTime;
+                       ParamChannels.Delete(ParamChannels.Count - 1);
+                    end;
+                    if FindStartTime(NewParameter, DateTime) then begin
+                       StartTime:= DateTime;
+                       ParamChannels.Delete(ParamChannels.Count - 1);
+                    end;
+                 end;
+            'M': IncDataOffset(RecordLength);
+            'D': begin
+                    DataChannel:= ParseDataChannel(RecordLength);
+                    TffStructure.AddChannel(DataChannel.DLIS, DataChannel.Units, DataChannel.RepCode, DataChannel.Samples, Tff_Ver);
+                 end;
+            'F': begin
+                    if isEnergiya then ParseFrameNRG(TffStructure.GetTFFDataChannels)
+                    else ParseFrame(RecordLength);
+                 end;
+            'B': IncDataOffset(RecordLength);
+         else ErrorCode:= WRONG_FILE_FORMAT;
+         end;
      end;
-     App.ProcessProgress.Position:= DataOffset;
+
+     i:= Trunc(DataOffset * 100 / CurrentFileSize);
+     if (i > iPrevPercent) then begin
+       App.ProcessProgress.Position:= DataOffset;
+       iPrevPercent:= i;
+     end;
+
   until EndOfFile Or (ErrorCode > 0);
-  Channels:= '';
+  if TffFrames.GetFrameRecords = Nil then ErrorCode:= WRONG_FILE_FORMAT;
+  TffStructure.SetSamplesTo1;
+  Result:= TffFrames.GetFrameRecords;
+  TffFrames.Done;
+
+  wEndTime:= Time;
+  App.TimeDifference.Caption:= IntToStr(SecondsBetween(wStartTime, wEndTime));
+
 end;
 
 end.

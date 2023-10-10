@@ -24,6 +24,7 @@ type
      function GetOffsetByName(DLISname: String): Word;
      procedure AddChannel(DLIS, Units, RepCode, Samples: String; TffVersion: Byte);
      function GetChannel(Index: Word): TTFFDataChannel;
+     procedure SetSamplesTo1;
   end;
 
   TTffFrames = object
@@ -35,18 +36,22 @@ type
      destructor Done;
      function GetCurrentFrameRecord: TFrameRecord;
      function GetFrameRecords: TFrameRecords;
+     function GetNumberOfRecords(): longWord;
      procedure AddRecord(DateTime: TDateTime; Size: Word; TFFDataChannels: TTFFDataChannels);
+     procedure MoveData();
      procedure AddData(Index: Word; Data: ShortInt);
      procedure AddData(Index: Word; Data: Byte);
      procedure AddData(Index: Word; Data: SmallInt);
      procedure AddData(Index: Word; Data: Word);
      procedure AddData(Index: Word; Data: LongInt);
      procedure AddData(Index: Word; Data: LongWord);
+     procedure AddData(Index: Word; Data: QWord);
      procedure AddData(Index: Word; Data: Single);
      procedure AddData(Index: Word; Data: Double);
   end;
 
 implementation
+uses Main;
 
   constructor TTffStructure.Init;
   begin
@@ -86,6 +91,12 @@ implementation
            Break;
         end;
      Result:= Offset;
+  end;
+
+  procedure TTffStructure.SetSamplesTo1;
+  var i : Word;
+  begin
+     for i:=0 to NumberOfChannels - 1 do TFFDataChannels[i].Samples:= '1';
   end;
 
   procedure TTffStructure.AddChannel(DLIS, Units, RepCode, Samples: String; TffVersion: Byte);
@@ -146,6 +157,16 @@ implementation
     Result:= FrameRecords;
   end;
 
+  function TTffFrames.GetNumberOfRecords(): longWord;
+  begin
+     Result:= NumberOfRecords;
+  end;
+
+  procedure TTffFrames.MoveData();
+  begin
+    Move(Bytes[DataOffset], FrameRecords[NumberOfRecords - 1].Data[0], Length(FrameRecords[NumberOfRecords - 1].Data));
+  end;
+
   procedure TTffFrames.AddData(Index: Word; Data: ShortInt);
   begin
     if Index <> U2_RESULT_ERROR then Move(Data, FrameRecords[NumberOfRecords - 1].Data[Index], 1);
@@ -174,6 +195,11 @@ implementation
   procedure TTffFrames.AddData(Index: Word; Data: LongWord);
   begin
      if Index <> U2_RESULT_ERROR then Move(Data, FrameRecords[NumberOfRecords - 1].Data[Index], 4);
+  end;
+
+  procedure TTffFrames.AddData(Index: Word; Data: QWord);
+  begin
+     if Index <> U2_RESULT_ERROR then Move(Data, FrameRecords[NumberOfRecords - 1].Data[Index], 8);
   end;
 
   procedure TTffFrames.AddData(Index: Word; Data: Single);

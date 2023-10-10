@@ -19,10 +19,13 @@ type
     AddMeasure: TCheckBox;
     AddUnitsFlag: TCheckBox;
     AddTypeFlag: TCheckBox;
+    Button1: TButton;
     Label3: TLabel;
     Label6: TLabel;
     Label7: TLabel;
     Label8: TLabel;
+    EnergiyaType: TLabel;
+    TimeDifference: TLabel;
     RecordRateL: TLabel;
     millisecL: TLabel;
     CloseApp: TBitBtn;
@@ -67,12 +70,14 @@ type
     procedure AddTypeFlagChange(Sender: TObject);
     procedure AddUnitsFlagChange(Sender: TObject);
     procedure BinDbSourceChange(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
     procedure CloseAppClick(Sender: TObject);
     procedure ConvertFileClick(Sender: TObject);
     procedure ConvertToCSVClick(Sender: TObject);
     procedure ConvertToTxtClick(Sender: TObject);
     procedure FileTypeListClick(Sender: TObject);
     procedure FloatDigitsChange(Sender: TObject);
+    procedure FormClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure HumanTimeChange(Sender: TObject);
     procedure RawSourceChange(Sender: TObject);
@@ -87,6 +92,9 @@ type
   end;
 
 var
+
+  TempArray: TBytes; // DELETE AFTER USE
+
   App: TApp;
 
   ErrorCode          : Byte;
@@ -160,27 +168,25 @@ procedure BinToBin_Db();
 begin
   if LoadSourceFile('bin', 100) then begin
      BinDataChannelsSet(TFFVersion);
-     FrameRecords:= BinDbParser(TFFVersion);
+     FrameRecords:= BinParser;
+     if App.SortTime.Checked then SortFrameRecordsByTime;
+     if ErrorCode = NO_ERROR then begin
 
+         BinDbConverter.Init(TFFVersion, FrameRecords);
+         BinDbConverter.SetTimeShiftByUser(App.ShiftHr.Value, App.ShiftMin.Value, App.ShiftSec.Value);
+         BinDbConverter.SetRecordRate(App.RecordRate.Value);
+         BinDbConverter.CreateParameters();
+         BinDbConverter.AddParameter('FORMAT=PC');
+         BinDbConverter.AddParameter('TYPE=TFF');
+         BinDbConverter.AddParameter('ToolId type=SIB');
+         BinDbConverter.AddParameter('ToolId MfgCode=SIB');
+         BinDbConverter.Composer(TffStructure.GetTFFDataChannels, FrameRecords);
 
-     //FrameRecords:= BinParser;
-     //if App.SortTime.Checked then SortFrameRecordsByTime;
-     //if ErrorCode = NO_ERROR then begin
-     //
-     //    BinDbConverter.Init(TFFVersion, FrameRecords);
-     //    BinDbConverter.SetTimeShiftByUser(App.ShiftHr.Value, App.ShiftMin.Value, App.ShiftSec.Value);
-     //    BinDbConverter.CreateParameters();
-     //    BinDbConverter.AddParameter('FORMAT=PC');
-     //    BinDbConverter.AddParameter('TYPE=TFF');
-     //    BinDbConverter.AddParameter('ToolId type=SIB');
-     //    BinDbConverter.AddParameter('ToolId MfgCode=SIB');
-     //    BinDbConverter.Composer(TffStructure.GetTFFDataChannels, FrameRecords);
-     //
-     //    SaveByteArray(BinDbConverter.GetBinDbData, ReplaceText(CurrentOpenedFile,ExtractFileExt(CurrentOpenedFile),'') + '.bin_db');
-     //
-     //    BinDbConverter.Done;
-     //end
-     //else Application.MessageBox(GetErrorMessage(ErrorCode),'Error', MB_ICONERROR + MB_OK);
+         SaveByteArray(BinDbConverter.GetBinDbData, ReplaceText(CurrentOpenedFile,ExtractFileExt(CurrentOpenedFile),'') + '.bin_db');
+
+         BinDbConverter.Done;
+     end
+     else Application.MessageBox(GetErrorMessage(ErrorCode),'Error', MB_ICONERROR + MB_OK);
   end;
 end;
 
@@ -194,6 +200,7 @@ begin
 
          BinDbConverter.Init(TFFVersion, FrameRecords);
          BinDbConverter.SetTimeShiftByUser(App.ShiftHr.Value, App.ShiftMin.Value, App.ShiftSec.Value);
+         BinDbConverter.SetRecordRate(App.RecordRate.Value);
          BinDbConverter.CreateParameters();
          BinDbConverter.Composer(TffStructure.GetTFFDataChannels, FrameRecords);
 
@@ -215,6 +222,7 @@ begin
 
          BinDbConverter.Init(TFFVersion, FrameRecords);
          BinDbConverter.SetTimeShiftByUser(App.ShiftHr.Value, App.ShiftMin.Value, App.ShiftSec.Value);
+         BinDbConverter.SetRecordRate(App.RecordRate.Value);
          BinDbConverter.CreateParameters();
          BinDbConverter.Composer(TffStructure.GetTFFDataChannels, FrameRecords);
 
@@ -236,6 +244,7 @@ begin
 
          BinDbConverter.Init(TFFVersion, FrameRecords);
          BinDbConverter.SetTimeShiftByUser(App.ShiftHr.Value, App.ShiftMin.Value, App.ShiftSec.Value);
+         BinDbConverter.SetRecordRate(App.RecordRate.Value);
          BinDbConverter.CreateParameters();
          BinDbConverter.Composer(TffStructure.GetTFFDataChannels, FrameRecords);
 
@@ -247,8 +256,31 @@ begin
   end;
 end;
 
+procedure Bin_DbToBin_Db();
+begin
+  if LoadSourceFile('bin_db', 100) then begin
+
+     FrameRecords:= BinDbParser(TFFVersion);
+     if App.SortTime.Checked then SortFrameRecordsByTime;
+     if ErrorCode = NO_ERROR then begin
+
+         BinDbConverter.Init(TFFVersion, FrameRecords);
+         BinDbConverter.SetTimeShiftByUser(App.ShiftHr.Value, App.ShiftMin.Value, App.ShiftSec.Value);
+         BinDbConverter.SetRecordRate(App.RecordRate.Value);
+         BinDbConverter.CreateParameters();
+         BinDbConverter.Composer(TffStructure.GetTFFDataChannels, FrameRecords);
+
+         SaveByteArray(BinDbConverter.GetBinDbData, ReplaceText(CurrentOpenedFile,ExtractFileExt(CurrentOpenedFile),'') + '_modified.bin_db');
+
+         BinDbConverter.Done;
+     end
+     else Application.MessageBox(GetErrorMessage(ErrorCode),'Error', MB_ICONERROR + MB_OK);
+  end;
+end;
+
 procedure TApp.ConvertFileClick(Sender: TObject);
 begin
+  App.EnergiyaType.Visible:= False;
   Indicator.Caption:= '';
   Indicator.Refresh;
   if RawSource.Checked then begin
@@ -257,7 +289,7 @@ begin
      if FileTypeList.ItemIndex = 2 then GamToBin_Db;
      if FileTypeList.ItemIndex = 3 then LTBToBin_Db;
   end
-  else ConvertBinDbVersion;
+  else Bin_DbToBin_Db;
 end;
 
 procedure TApp.ConvertToCSVClick(Sender: TObject);
@@ -323,6 +355,11 @@ end;
 procedure TApp.FloatDigitsChange(Sender: TObject);
 begin
   NumberEx.Caption:= FloatToStrF(ExampleValue, ffFixed, 10, FloatDigits.Value);
+end;
+
+procedure TApp.FormClick(Sender: TObject);
+begin
+  App.EnergiyaType.Visible:= False;
 end;
 
 
@@ -392,11 +429,24 @@ begin
   RecordRate.Visible:= True;
 end;
 
+procedure SetLengthArray(Arr:TBytes);
+begin
+  SetLength(TempArray, 5);
+end;
+
+procedure TApp.Button1Click(Sender: TObject);
+begin
+  SetLength(TempArray, 10);
+  SetLengthArray(TempArray);
+  ShowMessage(IntToStr(Length(TempArray)));
+end;
+
 procedure TApp.RawSourceChange(Sender: TObject);
 begin
   RecordRateL.Visible:= False;
   millisecL.Visible:= False;
   RecordRate.Visible:= False;
+  App.EnergiyaType.Visible:= False;
 end;
 
 procedure TApp.S100Change(Sender: TObject);

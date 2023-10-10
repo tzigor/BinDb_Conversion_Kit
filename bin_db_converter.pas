@@ -17,12 +17,14 @@ type
      FirstDateTime   : TDateTime; // Acquisition Start Date/Time
      TimeShift       : Single;
      TimeShiftByUser : Int16;
+     RecordRate      : LongWord;
      MRL             : Word;
   public
      constructor Init(Version: Byte; FrameRecords: TFrameRecords);
      destructor Done;
      function GetBinDbData: TBytes;
      procedure SetTimeShiftByUser(hr, min, sec: Int16);
+     procedure SetRecordRate(RecRate: LongWord);
      procedure AddLength(Len: LongWord);
      procedure CreateParameters();
      procedure AddParameter(Param: String);
@@ -32,12 +34,14 @@ type
   end;
 
 implementation
+uses Main;
 
 constructor TBinDbConverter.Init(Version: Byte; FrameRecords: TFrameRecords);
 begin
   SetLength(BinDbData, 0);
   DataOffset:= 0;
   TimeShiftByUser:= 0;
+  RecordRate:= 0;
   TFFVersion:= Version;
   MRL:= Length(FrameRecords[0].Data) + 4 + 1; { + 4 bytes for time + 'F' }
   FirstDateTime:= FrameRecords[0].DateTime;
@@ -59,6 +63,11 @@ begin
   TimeShiftByUser:= hr * 3600 + min * 60 + sec;
   FirstDateTime:= IncSecond(FirstDateTime, TimeShiftByUser);
   TimeShift:= SecondsBetween(FirstDateTime, DateOf(FirstDateTime)) / 100;
+end;
+
+procedure TBinDbConverter.SetRecordRate(RecRate: LongWord);
+begin
+  RecordRate:= RecRate;
 end;
 
 procedure TBinDbConverter.AddLength(Len: LongWord);
@@ -150,20 +159,39 @@ begin
 end;
 
 procedure TBinDbConverter.FramesComposer(FrameRecords: TFrameRecords);
-var i, NumOfFrames: longWord;
-    FrameLen, j: Word;
-    F4: Single;
-    F4Array: array[0..3] of Byte;
+var i, NumOfFrames    : longWord;
+    FrameLen, j       : Word;
+    F4                : Single;
+    F4Array           : array[0..3] of Byte;
+    PrevDateTime      : TDateTime;
+    TimeDiff          : LongWord;
+    iPrevPercent, n   : LongWord;
 begin
   NumOfFrames:= Length(FrameRecords);
+  PrevDateTime:= FrameRecords[0].DateTime;
+  iPrevPercent:= 0;
+  ProgressInit(100, 'Converting');
+  FrameLen:= Length(FrameRecords[0].Data);
   for i:=0 to NumOfFrames - 1 do begin
-     FrameLen:= Length(FrameRecords[i].Data);
-     AddLength(FrameLen + 4 + 1); { + 4 bytes for time + 'F' }
-     Insert(Ord('F'), BinDbData, DATA_MAX_SIZE);
-     F4:= (SecondsBetween(FirstDateTime, IncSecond(FrameRecords[i].DateTime, TimeShiftByUser)) / 100) + TimeShift;
-     Move(F4, F4Array, 4);
-     for j:=0 to 3 do Insert(F4Array[j], BinDbData, DATA_MAX_SIZE);
-     for j:=0 to FrameLen - 1 do Insert(FrameRecords[i].Data[j], BinDbData, DATA_MAX_SIZE);
+    TimeDiff:= MilliSecondsBetween(FrameRecords[0].DateTime, PrevDateTime);
+    if TimeDiff >= RecordRate then begin
+       AddLength(FrameLen + 4 + 1); { + 4 bytes for time + 'F' }
+       Insert(Ord('F'), BinDbData, DATA_MAX_SIZE);
+       F4:= (SecondsBetween(FirstDateTime, IncSecond(FrameRecords[0].DateTime, TimeShiftByUser)) / 100) + TimeShift;
+       Move(F4, F4Array, 4);
+       for j:=0 to 3 do Insert(F4Array[j], BinDbData, DATA_MAX_SIZE);
+       for j:=0 to FrameLen - 1 do Insert(FrameRecords[i].Data[j], BinDbData, DATA_MAX_SIZE);
+       //SetLength(BinDbData, Length(BinDbData) + FrameLen);
+       //Move(FrameRecords[0].Data[0], BinDbData[Length(BinDbData) - FrameLen], FrameLen);
+       PrevDateTime:= FrameRecords[0].DateTime;
+    end;
+    Delete(FrameRecords, 0, 1);
+
+    n:= Trunc(i * 100 / NumOfFrames);
+    if (n > iPrevPercent) then begin
+      App.ProcessProgress.Position:= n;
+      iPrevPercent:= n;
+    end;
   end;
 end;
 

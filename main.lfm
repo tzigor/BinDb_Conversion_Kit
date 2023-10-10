@@ -1,18 +1,19 @@
 object App: TApp
-  Left = 2092
-  Height = 422
-  Top = -726
+  Left = 2037
+  Height = 425
+  Top = -697
   Width = 589
   BorderStyle = bsSingle
   Caption = 'Bin-Db Conversion Kit v1.2.0 Portable'
-  ClientHeight = 422
+  ClientHeight = 425
   ClientWidth = 589
+  OnClick = FormClick
   OnCreate = FormCreate
   Position = poDefaultPosOnly
   LCLVersion = '2.2.4.0'
   object PageControl1: TPageControl
     Left = 0
-    Height = 422
+    Height = 425
     Top = 0
     Width = 589
     ActivePage = MainTab
@@ -21,7 +22,7 @@ object App: TApp
     TabOrder = 0
     object MainTab: TTabSheet
       Caption = 'Main'
-      ClientHeight = 394
+      ClientHeight = 397
       ClientWidth = 581
       object CSVBox: TGroupBox
         Left = 8
@@ -243,6 +244,15 @@ object App: TApp
           TabOrder = 11
           Value = 12
         end
+        object Button1: TButton
+          Left = 355
+          Height = 25
+          Top = 0
+          Width = 75
+          Caption = 'Button1'
+          OnClick = Button1Click
+          TabOrder = 12
+        end
       end
       object BinDbBox: TGroupBox
         Left = 8
@@ -365,6 +375,21 @@ object App: TApp
             OnChange = BinDbSourceChange
             TabOrder = 1
           end
+          object EnergiyaType: TLabel
+            Left = 130
+            Height = 21
+            Top = 38
+            Width = 91
+            Caption = 'Energiya tool'
+            Font.CharSet = ANSI_CHARSET
+            Font.Color = clBlue
+            Font.Height = -16
+            Font.Pitch = fpVariable
+            Font.Quality = fqDraft
+            ParentColor = False
+            ParentFont = False
+            Visible = False
+          end
         end
         object RecordRateL: TLabel
           Left = 8
@@ -481,6 +506,15 @@ object App: TApp
           ParentColor = False
           ParentFont = False
         end
+        object TimeDifference: TLabel
+          Left = 309
+          Height = 15
+          Top = 80
+          Width = 80
+          Caption = 'TimeDifference'
+          ParentColor = False
+          Visible = False
+        end
       end
       object ProcessProgress: TProgressBar
         Left = 80
@@ -520,7 +554,7 @@ object App: TApp
       object CloseApp: TBitBtn
         Left = 472
         Height = 33
-        Top = 356
+        Top = 360
         Width = 101
         Caption = 'Close'
         Font.CharSet = ANSI_CHARSET

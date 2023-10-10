@@ -113,7 +113,9 @@ begin
   if Not EndOfFile then begin
      Result:= Bytes[DataOffset];
      Inc(DataOffset);
-     if DataOffset >= currentFileSize then EndOfFile:= True;
+     if DataOffset >= currentFileSize then begin
+        EndOfFile:= True;
+     end;
   end;
 end;
 
@@ -193,8 +195,6 @@ begin
   App.ProcessLabel.Caption:= '';
   App.ProcessLabel.Refresh;
 end;
-
-
 
 function FillSingle(H1, H0, L1, L0: Byte): Single;
 var Flt: Single;
